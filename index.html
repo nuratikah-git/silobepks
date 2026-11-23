@@ -3109,6 +3109,7 @@ function renderUjianTable() {
   data.forEach((r, i) => {
     const s        = getUjianStatus(r);
     const sudah    = s === 'Sudah Ujian';
+    const sudah2025 = r[4] === 'Sudah Ujian' || (ujianOverride.hasOwnProperty(r[1]) && ujianOverride[r[1]] === 'Sudah Ujian'); // status 2025 statik sahaja
     const lulusData = getUjianLulus(r);
     const isOverridden = ujianOverride.hasOwnProperty(r[1]) && !lulusData;
 
@@ -3139,7 +3140,7 @@ function renderUjianTable() {
     // Butang download badge individual — terbuka untuk semua (tiada login diperlukan)
     const isSheetLulus = lulusData && lulusData.statusLulus === 'Lulus';
     const isStatikLulus = sudah && !lulusData; // lulus dari data statik sahaja (tiada dalam Sheets)
-    const isKedua = sudah && isSheetLulus;     // ada dalam KEDUA-DUA (statik 2025 + Sheets 2026 lulus)
+    const isKedua = sudah2025 && isSheetLulus; // ada dalam KEDUA-DUA (statik 2025 + Sheets 2026 lulus)
     // Badge hanya untuk yang markah ≥85 (atau data statik lama yang dianggap lulus)
     const markahForBadge = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
     const isMarkahLulus = markahForBadge >= LULUS_THRESHOLD || (markahForBadge === 0 && sudah && !lulusData);
