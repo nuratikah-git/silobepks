@@ -1637,6 +1637,64 @@ function filteredRecords(dept='', cat='', year='', month='') {
   );
 }
 
+function exportCSV() {
+  const dept   = document.getElementById('filter-dept').value;
+  const cat    = document.getElementById('filter-cat').value;
+  const year   = document.getElementById('filter-year').value;
+  const month  = document.getElementById('filter-month').value;
+  const search = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+
+  let data = filteredRecords(dept, cat, year, month);
+  if (search) {
+    data = data.filter(r =>
+      r.nama.toLowerCase().includes(search) ||
+      r.penganjur.toLowerCase().includes(search) ||
+      r.jabatan.toLowerCase().includes(search) ||
+      r.jenis.toLowerCase().includes(search) ||
+      (r.objektif || '').toLowerCase().includes(search) ||
+      (r.impak || '').toLowerCase().includes(search)
+    );
+  }
+
+  const headers = ['Bil','Tarikh Mula','Tarikh Tamat','Tempoh (Hari)','Nama Aktiviti','Jabatan','Jenis/Kategori','Kaedah','Lokasi','Penganjur','Kategori Peserta','Bilangan Peserta','Objektif','Impak'];
+
+  const escape = v => {
+    const s = String(v ?? '').replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const rows = data.map((r, i) => [
+    i + 1,
+    r.tarikhMula || r.tarikh,
+    r.tarikhTamat || r.tarikh,
+    r.tempoh || 1,
+    r.nama,
+    r.jabatan,
+    r.jenis,
+    r.kaedah || '',
+    r.lokasi || '',
+    r.penganjur || '',
+    r.kategoriPeserta || '',
+    r.peserta,
+    r.objektif || '',
+    r.impak || ''
+  ].map(escape).join(','));
+
+  const csv = [headers.map(escape).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+
+  // Nama fail ikut filter aktif
+  const labelTahun = year || 'SemuaTahun';
+  const labelJab   = dept || 'SemuaJabatan';
+  const labelKat   = cat  || 'SemuaKategori';
+  a.href     = url;
+  a.download = `LaporanOBE_PKS_${labelJab}_${labelKat}_${labelTahun}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function refreshYearSelects() {
   const years = [...new Set(records.map(r => r.tarikh.slice(0,4)))].sort().reverse();
   ['filter-year','lb-year','lt-year','l6-year'].forEach(id => {
