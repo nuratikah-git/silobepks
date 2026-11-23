@@ -1753,7 +1753,10 @@ function renderTable() {
   }
 
   data.forEach((r, i) => {
-    const canDel = currentUser && currentUser.role === 'Admin';
+    const canDel  = currentUser && currentUser.role === 'Admin';
+    const canEdit = canDel
+      || (currentUser && currentUser.role === 'Penyelaras' && currentUser.dept === r.jabatan)
+      || (currentUser && currentUser.role === 'Ketua Jabatan' && currentUser.dept === r.jabatan);
     const highlight = (text) => {
       if (!search) return text;
       const re = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
@@ -1779,7 +1782,7 @@ function renderTable() {
       <td style="text-align:center;font-weight:600;">${r.peserta}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap;">
         <button class="btn-primary-custom" style="padding:4px 9px;font-size:.72rem;margin-bottom:3px;" onclick="openReportModal(${r.id})"><i class="bi bi-eye"></i> Lihat</button>
-        ${canDel ? `<br><button class="btn-success-custom" style="padding:4px 9px;font-size:.72rem;margin-bottom:3px;" onclick="openEditModal(${r.id})"><i class="bi bi-pencil"></i> Edit</button>` : ''}
+        ${canEdit ? `<br><button class="btn-success-custom" style="padding:4px 9px;font-size:.72rem;margin-bottom:3px;" onclick="openEditModal(${r.id})"><i class="bi bi-pencil"></i> Edit</button>` : ''}
         ${canDel ? `<br><button class="btn-danger-custom" onclick="deleteRecord(${r.id})"><i class="bi bi-trash"></i></button>` : ''}
       </td>
     </tr>`;
@@ -3020,11 +3023,12 @@ function renderUjianProgressGrid() {
 function _renderZipButtons() {
   const isAdmin      = currentUser && currentUser.role === 'Admin';
   const isPenyelaras = currentUser && currentUser.role === 'Penyelaras';
+  const isKJ         = currentUser && currentUser.role === 'Ketua Jabatan';
   const container    = document.getElementById('ujian-zip-btns');
   const inner        = document.getElementById('ujian-zip-btns-inner');
   if (!container || !inner) return;
 
-  if (!isAdmin && !isPenyelaras) { container.style.display = 'none'; return; }
+  if (!isAdmin && !isPenyelaras && !isKJ) { container.style.display = 'none'; return; }
 
   inner.innerHTML = '';
 
@@ -3065,6 +3069,7 @@ function renderUjianTable() {
   const search = (document.getElementById('ujian-search')?.value || '').toLowerCase().trim();
   const isAdmin = currentUser && currentUser.role === 'Admin';
   const isPenyelaras = currentUser && currentUser.role === 'Penyelaras';
+  const isKJ = currentUser && currentUser.role === 'Ketua Jabatan';
 
   // Render butang ZIP
   _renderZipButtons();
@@ -3131,7 +3136,7 @@ function renderUjianTable() {
       lulusBadge = `<span style="color:#9ca3af;font-size:.82rem;">—</span>`;
     }
 
-    // Butang download badge individual — hanya Lulus, hanya untuk Admin atau Penyelaras jabatan sendiri
+    // Butang download badge individual — terbuka untuk semua (tiada login diperlukan)
     const isSheetLulus = lulusData && lulusData.statusLulus === 'Lulus';
     const isStatikLulus = sudah && !lulusData; // lulus dari data statik sahaja (tiada dalam Sheets)
     const isKedua = sudah && isSheetLulus;     // ada dalam KEDUA-DUA (statik 2025 + Sheets 2026 lulus)
@@ -3139,7 +3144,7 @@ function renderUjianTable() {
     const markahForBadge = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
     const isMarkahLulus = markahForBadge >= LULUS_THRESHOLD || (markahForBadge === 0 && sudah && !lulusData);
     const isRowLulus = (isSheetLulus || sudah) && isMarkahLulus;
-    const canDownload = isRowLulus && (isAdmin || (isPenyelaras && currentUser.dept === r[3]));
+    const canDownload = isRowLulus; // semua boleh download badge individu
     const safeName = r[2].replace(/'/g,"\\'");
     let badgeBtn;
     if (!canDownload) {
@@ -3200,6 +3205,57 @@ function renderUjianTable() {
       ${toggleBtn}
     </tr>`;
   });
+
+  // ── Render nama baru dari Sheets yang TIDAK dalam senarai UJIAN_DATA ──
+  const namaSenaraiSet = new Set(UJIAN_DATA.map(r => r[2].trim().toUpperCase()));
+  let extraIndex = data.length;
+
+  Object.entries(sheetsUjianData).forEach(([namaUpper, lulusData]) => {
+    if (namaSenaraiSet.has(namaUpper)) return; // dah ada dalam senarai — skip
+
+    const jabatan = lulusData.jabatan || '—';
+
+    // Tapis ikut filter aktif
+    if (dept   && jabatan !== dept) return;
+    if (status && status !== 'Sudah Ujian') return; // nama baru sentiasa 'Sudah Ujian'
+    if (lulus  && lulusData.statusLulus !== lulus) return;
+    if (search && !namaUpper.toLowerCase().includes(search)) return;
+
+    extraIndex++;
+
+    const isLulus2026 = lulusData.statusLulus === 'Lulus';
+    const lulusBadgeExtra = isLulus2026
+      ? `<span title="Markah: ${lulusData.markah}%" style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;cursor:default;"><i class="bi bi-patch-check-fill"></i> ${lulusData.markah}% <span style="background:#15803d;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Lulus)</span></span>`
+      : `<span title="Markah: ${lulusData.markah}% — Cuba lagi!" style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;cursor:default;"><i class="bi bi-journal-text"></i> ${lulusData.markah}% <span style="background:#a16207;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Perlu Peningkatan)</span></span>`;
+
+    const status2026Extra = isLulus2026
+      ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-check-circle-fill"></i> Sudah</span>`
+      : `<span style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-journal-text"></i> Sudah</span>`;
+
+    const safeName = namaUpper.replace(/'/g,"\\'");
+    const badgeBtnExtra = isLulus2026
+      ? `<button onclick="downloadBadge('${safeName}','${jabatan}',${lulusData.markah},'${lulusData.timestamp}')"
+           title="Badge 2026"
+           style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
+           <i class="bi bi-download"></i> Badge 2026
+         </button>`
+      : `<span style="color:#d1d5db;font-size:.75rem;">—</span>`;
+
+    tbody.innerHTML += `<tr style="background:#fffbeb;">
+      <td>${extraIndex}</td>
+      <td style="font-weight:600;">${highlight(namaUpper)} <span style="font-size:.65rem;background:#fef9c3;color:#a16207;border:1px solid #fde68a;border-radius:8px;padding:1px 6px;margin-left:4px;">2026 Baru</span></td>
+      <td><b>${jabatan}</b></td>
+      <td><span style="color:#9ca3af;font-size:.82rem;">—</span></td>
+      <td>${status2026Extra}</td>
+      <td>${lulusBadgeExtra}</td>
+      <td>${badgeBtnExtra}</td>
+      <td style="display:none;"></td>
+    </tr>`;
+  });
+
+  if (extraIndex > data.length && empty.style.display !== 'none') {
+    empty.style.display = 'none';
+  }
 }
 
 /* ─ LAIN-LAIN JABATAN ─ */
