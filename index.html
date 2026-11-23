@@ -1,0 +1,3599 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Laporan OBE (SiLOBE) – Politeknik Kuching Sarawak</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="seed_data.js"></script>
+  <style>
+    :root {
+      --sidebar-width: 260px;
+      --primary: #003a70;
+      --accent: #ffd700;
+      --light-bg: #f4f6fb;
+      --card-bg: #ffffff;
+      --border: #dee2e6;
+      --text-muted: #6c757d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--light-bg);
+      color: #1f2328;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-width);
+      min-height: 100vh;
+      background: var(--primary);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: transform .3s;
+    }
+
+    #sidebar .logo-area {
+      padding: 20px 16px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+      text-align: center;
+    }
+
+    /* Logo PNG — letak fail logo-pks.png dalam folder yang sama */
+    #sidebar .logo-area .logo-img-wrap {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 8px;
+      border-radius: 50%;
+      background: #fff;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #sidebar .logo-area .logo-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Fallback jika logo-pks.png tiada */
+    #sidebar .logo-area .logo-fallback {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-weight: 900;
+      color: var(--primary);
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    #sidebar .logo-area .inst-name {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: .82rem;
+      line-height: 1.3;
+      letter-spacing: .3px;
+    }
+
+    #sidebar .logo-area .inst-sub {
+      color: rgba(255,255,255,.65);
+      font-size: .72rem;
+      margin-top: 2px;
+    }
+
+    #sidebar nav { flex: 1; padding: 12px 0; }
+
+    #sidebar nav .nav-section {
+      color: rgba(255,255,255,.45);
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 18px 4px;
+    }
+
+    #sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      color: rgba(255,255,255,.82);
+      text-decoration: none;
+      font-size: .875rem;
+      border-left: 3px solid transparent;
+      transition: background .2s, border-color .2s;
+    }
+
+    #sidebar nav a:hover,
+    #sidebar nav a.active {
+      background: rgba(255,255,255,.1);
+      border-left-color: var(--accent);
+      color: #fff;
+    }
+
+    #sidebar nav a i { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* Login panel */
+    #sidebar .login-panel {
+      border-top: 1px solid rgba(255,255,255,.15);
+      padding: 16px;
+    }
+
+    #sidebar .login-panel .user-info {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    #sidebar .login-panel .user-info.show { display: flex; }
+
+    #sidebar .login-panel .user-info .avatar {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: var(--primary); font-size: .9rem;
+      flex-shrink: 0;
+    }
+
+    #sidebar .login-panel .user-info .uname { font-size: .82rem; font-weight: 600; }
+    #sidebar .login-panel .user-info .ujab  { font-size: .72rem; color: rgba(255,255,255,.6); }
+
+    #login-form-mini input,
+    #login-form-mini select {
+      font-size: .8rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.1);
+      color: #fff;
+      width: 100%;
+      margin-bottom: 7px;
+    }
+
+    #login-form-mini select option { color: #1f2328; background: #fff; }
+    #login-form-mini input::placeholder { color: rgba(255,255,255,.45); }
+    #login-form-mini input:focus,
+    #login-form-mini select:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,.18); }
+
+    #login-form-mini button {
+      width: 100%;
+      padding: 7px;
+      border-radius: 6px;
+      border: none;
+      background: var(--accent);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: .82rem;
+      cursor: pointer;
+    }
+
+    #login-form-mini button:hover { background: #e6c000; }
+
+    #logout-btn {
+      width: 100%;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.3);
+      background: transparent;
+      color: rgba(255,255,255,.7);
+      font-size: .78rem;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    #logout-btn:hover { background: rgba(255,0,0,.15); border-color: #f87171; color: #f87171; }
+
+    /* ── MAIN ── */
+    #main { margin-left: var(--sidebar-width); flex: 1; }
+
+    .topbar {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    .topbar .page-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+    .topbar .breadcrumb-text { font-size: .78rem; color: var(--text-muted); margin-top: 1px; }
+
+    .content-area { padding: 24px 28px; }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── STAT CARDS ── */
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 14px; margin-bottom: 24px; }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 16px 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat-card .dept-label { font-size: .7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .stat-card .dept-count { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1.1; margin: 4px 0; }
+    .stat-card .dept-sub   { font-size: .7rem; color: var(--text-muted); }
+    .stat-card .dept-bar   { margin-top: 8px; height: 4px; border-radius: 4px; background: #e5e7eb; }
+    .stat-card .dept-bar-fill { height: 100%; border-radius: 4px; background: var(--primary); }
+
+    /* ── SECTION CARD ── */
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 20px 22px;
+      margin-bottom: 22px;
+    }
+
+    .section-card h5 {
+      font-size: .92rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end; }
+    .filter-bar select, .filter-bar input { font-size: .82rem; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; }
+    .filter-bar label { font-size: .78rem; color: var(--text-muted); display: block; margin-bottom: 3px; }
+
+    .btn-primary-custom {
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 6px; padding: 7px 16px; font-size: .82rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary-custom:hover { background: #00508a; }
+
+    .btn-success-custom {
+      background: #198754; color: #fff; border: none;
+      border-radius: 6px; padding: 7px 16px; font-size: .82rem; font-weight: 600; cursor: pointer;
+    }
+
+    .btn-danger-custom {
+      background: #dc3545; color: #fff; border: none;
+      border-radius: 5px; padding: 5px 10px; font-size: .75rem; cursor: pointer;
+    }
+
+    /* ── TABLE ── */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    thead th { background: var(--primary); color: #fff; padding: 9px 10px; font-weight: 600; white-space: nowrap; text-align: left; }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: #f0f4ff; }
+    tbody td { padding: 8px 10px; vertical-align: middle; }
+
+    .badge-kurikulum    { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+    .badge-instruksional { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+    .badge-penilaian    { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+    .form-grid .full { grid-column: 1/-1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: .8rem; font-weight: 600; color: #374151; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: .83rem; background: #fff; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,58,112,.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+
+    .alert-success-custom {
+      background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46;
+      border-radius: 8px; padding: 12px 16px; font-size: .83rem; margin-bottom: 16px; display: none;
+    }
+
+    /* ── CHARTS ── */
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* ── SEARCH BAR ── */
+    .search-bar {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 6px 10px 6px 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: .82rem;
+      background: #fff;
+    }
+    .search-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,58,112,.12); }
+    .search-bar .search-icon {
+      position: absolute;
+      left: 9px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: .85rem;
+      pointer-events: none;
+    }
+
+    /* ── MODAL LAPORAN PENUH ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 760px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      animation: modalIn .2s ease;
+    }
+    @keyframes modalIn { from { opacity:0; transform: scale(.96); } to { opacity:1; transform: scale(1); } }
+
+    .modal-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 18px 22px 16px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-header .modal-title { font-size: 1rem; font-weight: 700; line-height: 1.35; }
+    .modal-header .modal-sub   { font-size: .75rem; color: rgba(255,255,255,.7); margin-top: 3px; }
+    .modal-header .close-btn {
+      background: rgba(255,255,255,.18);
+      border: none; color: #fff;
+      border-radius: 6px;
+      width: 32px; height: 32px;
+      cursor: pointer; flex-shrink: 0;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-header .close-btn:hover { background: rgba(255,255,255,.32); }
+
+    .modal-body { padding: 22px; }
+
+    .report-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 20px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 560px) { .report-meta-grid { grid-template-columns: 1fr; } }
+
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-item .meta-label {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--text-muted);
+    }
+    .meta-item .meta-value { font-size: .88rem; font-weight: 600; color: #1f2328; }
+
+    .report-section-title {
+      font-size: .78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--primary);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 4px; margin: 18px 0 10px;
+    }
+
+    .report-text-block {
+      background: var(--light-bg);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: .85rem;
+      line-height: 1.65;
+      color: #374151;
+      border: 1px solid var(--border);
+      min-height: 48px;
+      white-space: pre-wrap;
+    }
+
+
+    .modal-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px; justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-print {
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 6px; padding: 8px 18px;
+      font-size: .82rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-print:hover { background: #00508a; }
+
+    .btn-close-modal {
+      background: #fff; color: #374151;
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 18px;
+      font-size: .82rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-close-modal:hover { background: #f3f4f6; }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* ── PRINT STYLES ── */
+    @media print {
+      body > *:not(#print-frame) { display: none !important; }
+      #print-frame { display: block !important; }
+    }
+
+    /* ── LOCKED ── */
+    .locked-overlay {
+      background: rgba(255,255,255,.92); border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; color: var(--primary); font-size: .9rem; font-weight: 600;
+      padding: 40px; text-align: center; border: 1px solid var(--border);
+    }
+    .locked-overlay i { font-size: 2rem; color: var(--text-muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #main { margin-left: 0; }
+      .chart-row { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+    }
+
+    .toggle-btn {
+      display: none; position: fixed; top: 14px; left: 14px; z-index: 200;
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 6px; padding: 6px 10px; font-size: 1.1rem; cursor: pointer;
+    }
+    @media (max-width: 768px) { .toggle-btn { display: block; } }
+  </style>
+</head>
+<body>
+
+<button class="toggle-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+  <i class="bi bi-list"></i>
+</button>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<aside id="sidebar">
+
+  <div class="logo-area">
+    <div class="logo-img-wrap">
+      <img id="logo-img"
+           src="logo.png"
+           alt="Logo Politeknik Kuching Sarawak"
+           onerror="this.parentElement.style.display='none'; document.getElementById('logo-fallback').style.display='flex';" />
+    </div>
+    <div class="logo-fallback" id="logo-fallback">PKS</div>
+    <div class="inst-name">POLITEKNIK KUCHING SARAWAK</div>
+    <div class="inst-sub">Sistem Laporan OBE (SiLOBE)</div>
+  </div>
+
+  <nav>
+    <div class="nav-section">Menu Utama</div>
+    <a href="#" class="active" onclick="showView('dashboard',this); return false;"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="#" onclick="showView('senarai',this); return false;"><i class="bi bi-table"></i> Senarai Laporan</a>
+    <a href="#" onclick="showView('portal-obe',this); return false;" style="border-left-color:var(--accent);background:rgba(255,215,0,.08);"><i class="bi bi-grid-3x3-gap-fill"></i> Portal OBE PKS</a>
+    <a href="#" onclick="showView('cqi-pks',this); return false;" style="border-left-color:#0ea5e9;background:rgba(14,165,233,.08);"><i class="bi bi-folder2-open" style="color:#0ea5e9;"></i> CQI PKS</a>
+
+    <div class="nav-section">Ujian Kefahaman OBE</div>
+    <a href="https://forms.gle/11To6MdzreimFy2p7" target="_blank" style="border-left-color:#ffd700;background:rgba(255,215,0,.1);" onclick="document.getElementById('sidebar').classList.remove('open');"><i class="bi bi-pencil-fill" style="color:#ffd700;"></i> <span style="color:#ffd700;font-weight:700;">Jawab Ujian OBE</span> <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;margin-left:auto;opacity:.7;"></i></a>
+    <a href="#" onclick="showView('ujian-obe',this); return false;"><i class="bi bi-patch-check-fill"></i> Status Ujian Pensyarah</a>
+
+    <div class="nav-section">Statistik</div>
+    <a href="#" onclick="showView('stat-jabatan',this); return false;"><i class="bi bi-bar-chart-line"></i> Statistik Jabatan</a>
+    <a href="#" onclick="showView('stat-kategori',this); return false;"><i class="bi bi-pie-chart"></i> Statistik Kategori</a>
+
+    <div class="nav-section">Laporan</div>
+    <a href="#" onclick="showView('laporan-bulanan',this); return false;"><i class="bi bi-calendar-month"></i> Laporan Bulanan</a>
+    <a href="#" onclick="showView('laporan-tahunan',this); return false;"><i class="bi bi-calendar-range"></i> Laporan Tahunan</a>
+    <a href="#" onclick="showView('laporan-6bulan',this); return false;"><i class="bi bi-clipboard2-data"></i> Laporan 6 Bulan</a>
+
+    <div class="nav-section">Input</div>
+    <a href="#" onclick="showView('input',this); return false;"><i class="bi bi-pencil-square"></i> Input Laporan</a>
+  </nav>
+
+  <div class="login-panel">
+    <div class="user-info" id="user-info">
+      <div class="avatar" id="user-avatar">A</div>
+      <div>
+        <div class="uname" id="user-name-display">Admin</div>
+        <div class="ujab" id="user-dept-display">Jabatan</div>
+      </div>
+    </div>
+
+    <div id="login-form-mini">
+      <div style="color:rgba(255,255,255,.7);font-size:.75rem;font-weight:600;margin-bottom:8px;text-align:center;">
+        <i class="bi bi-person-lock"></i> LOG MASUK
+      </div>
+      <input type="text" id="login-user" placeholder="Nama Pengguna" />
+      <input type="password" id="login-pass" placeholder="Kata Laluan" />
+      <div id="login-error" style="color:#fca5a5;font-size:.72rem;margin-bottom:6px;display:none;">
+        Nama pengguna atau kata laluan salah.
+      </div>
+      <button onclick="doLogin()"><i class="bi bi-box-arrow-in-right"></i> Masuk</button>
+      <div style="color:rgba(255,255,255,.4);font-size:.68rem;text-align:center;margin-top:6px;">
+        <i class="bi bi-eye"></i> Tetamu boleh lihat tanpa log masuk
+      </div>
+    </div>
+
+    <button id="logout-btn" onclick="doLogout()" style="display:none;">
+      <i class="bi bi-box-arrow-left"></i> Log Keluar
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<main id="main">
+
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="topbar-title">Dashboard OBE</div>
+      <div class="breadcrumb-text" id="topbar-sub">Outcomes Based Education – Politeknik Kuching Sarawak</div>
+    </div>
+    <div style="font-size:.8rem;color:var(--text-muted);" id="topbar-user">Belum log masuk</div>
+  </div>
+
+  <!-- Banner Peringatan Pengesahan KJ -->
+  <div id="banner-pengesahan" style="display:none;align-items:center;justify-content:space-between;background:#b45309;color:#fff;padding:10px 20px;font-size:.82rem;gap:12px;flex-wrap:wrap;">
+    <span id="banner-pengesahan-text"></span>
+    <button onclick="hideBannerPengesahan()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:.78rem;white-space:nowrap;"><i class="bi bi-x-lg"></i> Tutup</button>
+  </div>
+
+  <div class="content-area">
+
+    <!-- VIEW: DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="stat-cards" id="dept-cards"></div>
+      <div class="chart-row">
+        <div class="section-card">
+          <h5><i class="bi bi-bar-chart"></i> Aktiviti mengikut Jabatan</h5>
+          <div class="chart-wrap"><canvas id="chartDept"></canvas></div>
+        </div>
+        <div class="section-card">
+          <h5><i class="bi bi-pie-chart"></i> Aktiviti mengikut Kategori</h5>
+          <div class="chart-wrap"><canvas id="chartCat"></canvas></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <h5><i class="bi bi-clock-history"></i> 5 Aktiviti Terkini</h5>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Tarikh</th><th>Nama Aktiviti</th><th>Jabatan</th><th>Kategori</th><th>Peserta</th></tr></thead>
+            <tbody id="recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: INPUT LAPORAN -->
+    <div id="view-input" class="view">
+      <div id="input-locked" class="locked-overlay" style="display:none;">
+        <i class="bi bi-lock-fill"></i>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">Akses Terhad</div>
+        <div id="input-locked-msg" style="font-size:.85rem;color:#6c757d;text-align:center;max-width:360px;line-height:1.6;">
+          Hanya <b>Penyelaras OBE Jabatan</b> boleh akses bahagian ini.<br/>
+          Sila hubungi Administrator untuk maklumat lanjut.
+        </div>
+      </div>
+      <div id="input-form-area">
+        <div class="alert-success-custom" id="form-success">
+          <i class="bi bi-check-circle-fill"></i> Laporan aktiviti berjaya disimpan!
+        </div>
+        <div class="section-card">
+          <h5><i class="bi bi-pencil-square"></i> Borang Input Laporan Aktiviti OBE</h5>
+          <form id="obe-form" onsubmit="submitForm(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Tarikh Mula *</label>
+                <input type="date" id="f-tarikh-mula" required onchange="kiraTempoh('f')" />
+              </div>
+              <div class="form-group">
+                <label>Tarikh Tamat *</label>
+                <input type="date" id="f-tarikh-tamat" required onchange="kiraTempoh('f')" />
+              </div>
+              <div class="form-group full">
+                <div id="f-tempoh-display" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:.83rem;color:#15803d;display:flex;align-items:center;gap:8px;">
+                  <i class="bi bi-calendar-check"></i>
+                  <span id="f-tempoh-text">—</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Jabatan *</label>
+                <select id="f-jabatan" required onchange="toggleLainLain('f')">
+                  <option value="">-- Pilih --</option>
+                  <option>JKA</option><option>JKE</option><option>JKM</option>
+                  <option>JP</option><option>JTMK</option><option>JKPK</option>
+                  <option>JMSK</option><option>JPA</option>
+                  <option value="Lain-lain">Lain-lain</option>
+                </select>
+              </div>
+              <div class="form-group" id="f-lainlain-group" style="display:none;">
+                <label>Sila nyatakan jabatan/unit: *</label>
+                <input type="text" id="f-jabatan-lain" placeholder="cth: Unit Peperiksaan, Merentas Jabatan, HEP..." />
+              </div>
+              <div class="form-group full">
+                <label>Nama Aktiviti *</label>
+                <input type="text" id="f-nama" placeholder="cth: Bengkel Semakan Kurikulum OBE" required />
+              </div>
+              <div class="form-group">
+                <label>Penganjur *</label>
+                <input type="text" id="f-penganjur" placeholder="cth: Unit Penilaian & Peperiksaan" required />
+              </div>
+              <div class="form-group">
+                <label>Jenis/Kategori Aktiviti *</label>
+                <select id="f-jenis" required>
+                  <option value="">-- Pilih --</option>
+                  <option value="Kurikulum">Kurikulum</option>
+                  <option value="Instruksional">Instruksional</option>
+                  <option value="Penilaian">Penilaian</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Kaedah Pelaksanaan *</label>
+                <select id="f-kaedah" required>
+                  <option value="">-- Pilih --</option>
+                  <option value="Bersemuka">Bersemuka</option>
+                  <option value="Dalam Talian (Online)">Dalam Talian (Online)</option>
+                  <option value="Hibrid (Bersemuka & Online)">Hibrid (Bersemuka & Online)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Lokasi / Platform *</label>
+                <input type="text" id="f-lokasi" placeholder="cth: Dewan Kuliah A / Google Meet / MS Teams" required />
+              </div>
+              <div class="form-group">
+                <label>Kategori Peserta *</label>
+                <select id="f-kategori-peserta" required>
+                  <option value="">-- Pilih --</option>
+                  <option value="Pensyarah">Pensyarah</option>
+                  <option value="Pelajar">Pelajar</option>
+                  <option value="Pensyarah & Pelajar">Pensyarah &amp; Pelajar</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Bilangan Peserta *</label>
+                <input type="number" id="f-peserta" min="1" placeholder="0" required />
+              </div>
+              <div class="form-group full">
+                <label>Objektif Program *</label>
+                <textarea id="f-objektif" placeholder="Nyatakan objektif aktiviti yang dijalankan..." required></textarea>
+              </div>
+              <div class="form-group full">
+                <label>Impak Program</label>
+                <textarea id="f-impak" placeholder="Huraikan impak / hasil yang dicapai dari aktiviti ini..."></textarea>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px;">
+              <button type="submit" class="btn-primary-custom"><i class="bi bi-save"></i> Simpan Laporan</button>
+              <button type="button" class="btn-success-custom" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: SENARAI LAPORAN -->
+    <div id="view-senarai" class="view">
+      <div class="section-card">
+        <h5><i class="bi bi-table"></i> Senarai Laporan Aktiviti OBE</h5>
+        <div class="filter-bar">
+          <div class="search-bar">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="filter-search" placeholder="Cari nama aktiviti, penganjur, jabatan..." oninput="renderTable()" />
+          </div>
+          <div><label>Jabatan</label>
+            <select id="filter-dept" onchange="renderTable()">
+              <option value="">Semua</option>
+              <option>JKA</option><option>JKE</option><option>JKM</option>
+              <option>JP</option><option>JTMK</option><option>JKPK</option>
+              <option>JMSK</option><option>JPA</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select></div>
+          <div><label>Kategori</label>
+            <select id="filter-cat" onchange="renderTable()">
+              <option value="">Semua</option>
+              <option>Kurikulum</option><option>Instruksional</option><option>Penilaian</option>
+            </select></div>
+          <div><label>Tahun</label>
+            <select id="filter-year" onchange="renderTable()"><option value="">Semua</option></select></div>
+          <div><label>Bulan</label>
+            <select id="filter-month" onchange="renderTable()">
+              <option value="">Semua</option>
+              <option value="01">Januari</option><option value="02">Februari</option>
+              <option value="03">Mac</option><option value="04">April</option>
+              <option value="05">Mei</option><option value="06">Jun</option>
+              <option value="07">Julai</option><option value="08">Ogos</option>
+              <option value="09">September</option><option value="10">Oktober</option>
+              <option value="11">November</option><option value="12">Disember</option>
+            </select></div>
+          <div style="margin-left:auto;align-self:flex-end;">
+            <button class="btn-success-custom" onclick="exportCSV()" style="display:flex;align-items:center;gap:6px;">
+              <i class="bi bi-filetype-csv"></i> Export CSV
+            </button>
+          </div>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;" id="search-result-count"></div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Tarikh Mula</th><th>Tarikh Tamat</th><th>Tempoh</th><th>Nama Aktiviti</th><th>Jabatan</th>
+              <th>Penganjur</th><th>Kaedah</th><th>Lokasi</th><th>Kategori OBE</th><th>Peserta</th><th>Tindakan</th></tr>
+            </thead>
+            <tbody id="main-tbody"></tbody>
+          </table>
+        </div>
+        <div id="table-empty" style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem;display:none;">
+          <i class="bi bi-inbox" style="font-size:1.8rem;display:block;margin-bottom:6px;"></i>Tiada rekod dijumpai.
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL EDIT REKOD ══ -->
+    <div class="modal-overlay" id="edit-modal" onclick="closeEditModal(event)">
+      <div class="modal-box" id="edit-modal-box" style="max-width:680px;">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title"><i class="bi bi-pencil-square"></i> Edit Rekod Aktiviti</div>
+            <div class="modal-sub" id="edit-modal-sub">Kemaskini maklumat aktiviti</div>
+          </div>
+          <button class="close-btn" onclick="closeEditModal(null,true)"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert-success-custom" id="edit-success">
+            <i class="bi bi-check-circle-fill"></i> Rekod berjaya dikemaskini!
+          </div>
+          <form id="edit-form" onsubmit="saveEdit(event)">
+            <input type="hidden" id="edit-id" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Tarikh Mula *</label>
+                <input type="date" id="edit-tarikh-mula" required onchange="kiraTempoh('edit')" />
+              </div>
+              <div class="form-group">
+                <label>Tarikh Tamat *</label>
+                <input type="date" id="edit-tarikh-tamat" required onchange="kiraTempoh('edit')" />
+              </div>
+              <div class="form-group full">
+                <div id="edit-tempoh-display" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:.83rem;color:#15803d;display:flex;align-items:center;gap:8px;">
+                  <i class="bi bi-calendar-check"></i>
+                  <span id="edit-tempoh-text">—</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Jabatan *</label>
+                <select id="edit-jabatan" required onchange="toggleLainLain('edit')">
+                  <option value="">-- Pilih --</option>
+                  <option>JKA</option><option>JKE</option><option>JKM</option>
+                  <option>JP</option><option>JTMK</option><option>JKPK</option>
+                  <option>JMSK</option><option>JPA</option>
+                  <option value="Lain-lain">Lain-lain</option>
+                </select>
+              </div>
+              <div class="form-group" id="edit-lainlain-group" style="display:none;">
+                <label>Sila nyatakan jabatan/unit: *</label>
+                <input type="text" id="edit-jabatan-lain" placeholder="cth: Unit Peperiksaan, Merentas Jabatan, HEP..." />
+              </div>
+              <div class="form-group full">
+                <label>Nama Aktiviti *</label>
+                <input type="text" id="edit-nama" required />
+              </div>
+              <div class="form-group">
+                <label>Penganjur *</label>
+                <input type="text" id="edit-penganjur" required />
+              </div>
+              <div class="form-group">
+                <label>Jenis/Kategori Aktiviti *</label>
+                <select id="edit-jenis" required>
+                  <option value="">-- Pilih --</option>
+                  <option value="Kurikulum">Kurikulum</option>
+                  <option value="Instruksional">Instruksional</option>
+                  <option value="Penilaian">Penilaian</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Kaedah Pelaksanaan *</label>
+                <select id="edit-kaedah" required>
+                  <option value="">-- Pilih --</option>
+                  <option value="Bersemuka">Bersemuka</option>
+                  <option value="Dalam Talian (Online)">Dalam Talian (Online)</option>
+                  <option value="Hibrid (Bersemuka & Online)">Hibrid (Bersemuka & Online)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Lokasi / Platform *</label>
+                <input type="text" id="edit-lokasi" required />
+              </div>
+              <div class="form-group">
+                <label>Bilangan Peserta *</label>
+                <input type="number" id="edit-peserta" min="1" required />
+              </div>
+              <div class="form-group full">
+                <label>Objektif Program *</label>
+                <textarea id="edit-objektif" required></textarea>
+              </div>
+              <div class="form-group full">
+                <label>Impak Program</label>
+                <textarea id="edit-impak"></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-close-modal" onclick="closeEditModal(null,true)"><i class="bi bi-x"></i> Batal</button>
+          <button class="btn-print" style="background:#198754;" onclick="document.getElementById('edit-form').requestSubmit()">
+            <i class="bi bi-save"></i> Simpan Perubahan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL LAPORAN PENUH ══ -->
+    <div class="modal-overlay" id="report-modal" onclick="closeReportModal(event)">
+      <div class="modal-box" id="report-modal-box">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="modal-report-title">—</div>
+            <div class="modal-sub" id="modal-report-sub">Laporan Aktiviti OBE – Politeknik Kuching Sarawak</div>
+          </div>
+          <button class="close-btn" onclick="closeReportModal(null,true)"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="modal-body" id="modal-report-body"></div>
+        <div class="modal-footer">
+          <button class="btn-close-modal" onclick="closeReportModal(null,true)"><i class="bi bi-x"></i> Tutup</button>
+          <button class="btn-print" onclick="printReport()"><i class="bi bi-printer"></i> Cetak / Simpan PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden print frame -->
+    <div id="print-frame" style="display:none;"></div>
+
+    <!-- VIEW: STATISTIK JABATAN -->
+    <div id="view-stat-jabatan" class="view">
+      <div class="stat-cards" id="stat-dept-cards"></div>
+      <div class="section-card">
+        <h5><i class="bi bi-bar-chart-line"></i> Perbandingan Aktiviti Mengikut Jabatan</h5>
+        <div style="height:320px;"><canvas id="chartDeptFull"></canvas></div>
+      </div>
+      <div class="section-card">
+        <h5><i class="bi bi-table"></i> Ringkasan Jabatan</h5>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Jabatan</th><th>Kurikulum</th><th>Instruksional</th><th>Penilaian</th><th>Jumlah</th><th>Jumlah Peserta</th></tr></thead>
+            <tbody id="stat-dept-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: STATISTIK KATEGORI -->
+    <div id="view-stat-kategori" class="view">
+      <div class="chart-row">
+        <div class="section-card">
+          <h5><i class="bi bi-pie-chart"></i> Nisbah Kategori Aktiviti</h5>
+          <div style="height:300px;"><canvas id="chartCatFull"></canvas></div>
+        </div>
+        <div class="section-card">
+          <h5><i class="bi bi-bar-chart-steps"></i> Kategori vs Jabatan</h5>
+          <div style="height:300px;"><canvas id="chartCatDept"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: LAPORAN BULANAN -->
+    <div id="view-laporan-bulanan" class="view">
+      <div class="section-card">
+        <h5><i class="bi bi-calendar-month"></i> Laporan Bulanan</h5>
+        <div class="filter-bar">
+          <div><label>Tahun</label><select id="lb-year" onchange="renderBulanan()"><option value="">Semua</option></select></div>
+          <div><label>Bulan</label>
+            <select id="lb-month" onchange="renderBulanan()">
+              <option value="">Semua</option>
+              <option value="01">Januari</option><option value="02">Februari</option>
+              <option value="03">Mac</option><option value="04">April</option>
+              <option value="05">Mei</option><option value="06">Jun</option>
+              <option value="07">Julai</option><option value="08">Ogos</option>
+              <option value="09">September</option><option value="10">Oktober</option>
+              <option value="11">November</option><option value="12">Disember</option>
+            </select></div>
+          <div><label>Jabatan</label>
+            <select id="lb-dept" onchange="renderBulanan()">
+              <option value="">Semua</option>
+              <option>JKA</option><option>JKE</option><option>JKM</option>
+              <option>JP</option><option>JTMK</option><option>JKPK</option>
+              <option>JMSK</option><option>JPA</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select></div>
+        </div>
+        <div style="height:280px;margin-bottom:20px;"><canvas id="chartBulanan"></canvas></div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Tarikh</th><th>Nama Aktiviti</th><th>Jabatan</th><th>Kategori</th><th>Penganjur</th><th>Peserta</th><th>Objektif</th><th>Impak</th></tr></thead>
+            <tbody id="bulanan-tbody"></tbody>
+          </table>
+        </div>
+        <div id="bulanan-empty" style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem;display:none;">
+          <i class="bi bi-inbox" style="font-size:1.8rem;display:block;margin-bottom:6px;"></i>Tiada rekod untuk tempoh ini.
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: LAPORAN TAHUNAN -->
+    <div id="view-laporan-tahunan" class="view">
+      <div class="section-card">
+        <h5><i class="bi bi-calendar-range"></i> Laporan Tahunan</h5>
+        <div class="filter-bar">
+          <div><label>Tahun</label><select id="lt-year" onchange="renderTahunan()"><option value="">Semua</option></select></div>
+          <div><label>Jabatan</label>
+            <select id="lt-dept" onchange="renderTahunan()">
+              <option value="">Semua</option>
+              <option>JKA</option><option>JKE</option><option>JKM</option>
+              <option>JP</option><option>JTMK</option><option>JKPK</option>
+              <option>JMSK</option><option>JPA</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select></div>
+        </div>
+        <div style="height:280px;margin-bottom:20px;"><canvas id="chartTahunan"></canvas></div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Bulan</th><th>Kurikulum</th><th>Instruksional</th><th>Penilaian</th><th>Jumlah</th><th>Jumlah Peserta</th></tr></thead>
+            <tbody id="tahunan-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: LAPORAN KESELURUHAN 6 BULAN -->
+    <div id="view-laporan-6bulan" class="view">
+      <!-- Overlay untuk tetamu -->
+      <div id="l6-locked" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:10px;background:var(--card-bg);border-radius:10px;border:1px solid var(--border);">
+        <i class="bi bi-lock-fill" style="font-size:2.2rem;color:var(--text-muted);"></i>
+        <div style="font-size:1rem;font-weight:700;">Akses Terhad</div>
+        <div style="font-size:.85rem;color:#6c757d;max-width:340px;line-height:1.6;">Sila <b>log masuk</b> untuk melihat Laporan 6 Bulan.<br/>Hanya pengguna berdaftar boleh mengakses laporan ini.</div>
+      </div>
+      <div id="l6-content" class="section-card">
+        <h5><i class="bi bi-clipboard2-data"></i> Laporan Keseluruhan Aktiviti OBE – 6 Bulan</h5>
+        <div class="filter-bar" style="flex-wrap:wrap;gap:12px;align-items:flex-end;">
+          <div><label>Tahun</label><select id="l6-year" onchange="render6Bulan()"><option value="">Semua</option></select></div>
+          <div><label>Separuh Tahun</label>
+            <select id="l6-separuh" onchange="render6Bulan()">
+              <option value="1">Separuh Pertama (Jan – Jun)</option>
+              <option value="2">Separuh Kedua (Jul – Dis)</option>
+            </select>
+          </div>
+          <div><label>Jabatan</label>
+            <select id="l6-jabatan" onchange="render6Bulan()">
+              <option value="">Semua Jabatan</option>
+              <option value="JKA">JKA</option>
+              <option value="JKE">JKE</option>
+              <option value="JKM">JKM</option>
+              <option value="JP">JP</option>
+              <option value="JTMK">JTMK</option>
+              <option value="JKPK">JKPK</option>
+              <option value="JMSK">JMSK</option>
+              <option value="JPA">JPA</option>
+              <option value="Lain-lain">Lain-lain</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+            <div id="l6-badge-pengesahan"></div>
+            <button id="l6-btn-sahkan" onclick="sahkanLaporan6Bulan()" style="display:none;align-items:center;gap:6px;background:#15803d;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:.8rem;cursor:pointer;font-weight:600;"><i class="bi bi-patch-check-fill"></i> Sahkan Laporan</button>
+            <button class="btn-print" onclick="print6Bulan()" style="display:flex;align-items:center;gap:6px;"><i class="bi bi-printer"></i> Cetak / PDF</button>
+          </div>
+        </div>
+        <!-- Panel maklumat pengesahan (selepas disahkan) -->
+        <div id="l6-panel-pengesahan" style="display:none;"></div>
+
+        <!-- KPI Summary -->
+        <div id="l6-kpi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:18px 0;"></div>
+
+        <!-- Chart -->
+        <div style="height:260px;margin-bottom:20px;"><canvas id="chart6Bulan"></canvas></div>
+
+        <!-- Jadual ringkasan per jabatan -->
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:4px;margin-bottom:12px;">Ringkasan Mengikut Jabatan</div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Jabatan</th><th>Kurikulum</th><th>Instruksional</th><th>Penilaian</th><th>Jumlah Aktiviti</th><th>Jumlah Peserta</th></tr></thead>
+            <tbody id="l6-dept-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Jadual senarai aktiviti -->
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:4px;margin:20px 0 12px;">Senarai Aktiviti</div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Tarikh</th><th>Nama Aktiviti</th><th>Jabatan</th><th>Kategori</th><th>Penganjur</th><th>Peserta</th></tr></thead>
+            <tbody id="l6-list-tbody"></tbody>
+          </table>
+        </div>
+        <div id="l6-empty" style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem;display:none;">
+          <i class="bi bi-inbox" style="font-size:1.8rem;display:block;margin-bottom:6px;"></i>Tiada rekod untuk tempoh ini.
+        </div>
+      </div><!-- /l6-content -->
+    </div><!-- /view-laporan-6bulan -->
+
+    <!-- VIEW: PORTAL OBE PKS -->
+    <div id="view-portal-obe" class="view">
+      <div style="background:var(--card-bg);border-radius:10px;border:1px solid var(--border);overflow:hidden;height:calc(100vh - 120px);display:flex;flex-direction:column;">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="background:var(--accent);color:var(--primary);border-radius:6px;padding:4px 10px;font-size:.75rem;font-weight:700;letter-spacing:.5px;">PADLET</span>
+            <span style="font-size:.9rem;font-weight:700;color:var(--primary);">Portal OBE PKS – Politeknik Kuching Sarawak</span>
+          </div>
+          <a href="https://padlet.com/nuratikah10/portal-obe-poliku-k1jljelbbzt3s2uk" target="_blank"
+             style="font-size:.78rem;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:6px;padding:5px 10px;">
+            <i class="bi bi-box-arrow-up-right"></i> Buka dalam tab baharu
+          </a>
+        </div>
+        <iframe
+          src="https://padlet.com/nuratikah10/portal-obe-poliku-k1jljelbbzt3s2uk"
+          frameborder="0"
+          allow="camera;microphone;geolocation"
+          style="flex:1;width:100%;border:none;display:block;">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- VIEW: CQI PKS -->
+    <div id="view-cqi-pks" class="view">
+      <div class="section-card">
+        <h5><i class="bi bi-folder2-open" style="color:#0ea5e9;"></i> Dokumen CQI PKS – Sesi I 2026/2027</h5>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:18px;">Muat turun templat dan taklimat berkaitan Continuous Quality Improvement (CQI) PKS.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <!-- Fail 1: PowerPoint -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid var(--border);border-radius:8px;background:#f8faff;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="background:#c2410c;color:#fff;border-radius:8px;padding:8px 12px;font-size:.75rem;font-weight:700;letter-spacing:.5px;">PPTX</div>
+              <div>
+                <div style="font-weight:600;font-size:.88rem;color:var(--primary);">Taklimat CQI PKS Sesi I 2026_2027</div>
+                <div style="font-size:.75rem;color:var(--text-muted);">Microsoft PowerPoint · 5,738 KB</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="Taklimat CQI PKS Sesi I 2026_2027.pptx" target="_blank"
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                <i class="bi bi-eye"></i> Lihat
+              </a>
+              <a href="Taklimat CQI PKS Sesi I 2026_2027.pptx" download
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid #0ea5e9;background:#eff6ff;color:#0369a1;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600;">
+                <i class="bi bi-download"></i> Muat Turun
+              </a>
+            </div>
+          </div>
+
+          <!-- Fail 2: Excel PLO -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid var(--border);border-radius:8px;background:#f8faff;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 12px;font-size:.75rem;font-weight:700;letter-spacing:.5px;">XLSX</div>
+              <div>
+                <div style="font-weight:600;font-size:.88rem;color:var(--primary);">Templat Laporan Pencapaian PLO Pelajar Sesi I 2026_2027</div>
+                <div style="font-size:.75rem;color:var(--text-muted);">Microsoft Excel · 23 KB</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="Templat laporan Pencapaian PLO Pelajar Sesi I 2026_2027.xlsx" target="_blank"
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                <i class="bi bi-eye"></i> Lihat
+              </a>
+              <a href="Templat laporan Pencapaian PLO Pelajar Sesi I 2026_2027.xlsx" download
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid #0ea5e9;background:#eff6ff;color:#0369a1;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600;">
+                <i class="bi bi-download"></i> Muat Turun
+              </a>
+            </div>
+          </div>
+
+          <!-- Fail 3: Excel CQI V2 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid var(--border);border-radius:8px;background:#f8faff;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 12px;font-size:.75rem;font-weight:700;letter-spacing:.5px;">XLSX</div>
+              <div>
+                <div style="font-weight:600;font-size:.88rem;color:var(--primary);">Template Borang Pelaporan CQI PKS Sesi I 2026_2027 V2</div>
+                <div style="font-size:.75rem;color:var(--text-muted);">Microsoft Excel · 60 KB</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="Template Borang Pelaporan CQI PKS Sesi I 2026_2027 V2.xlsx" target="_blank"
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                <i class="bi bi-eye"></i> Lihat
+              </a>
+              <a href="Template Borang Pelaporan CQI PKS Sesi I 2026_2027 V2.xlsx" download
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid #0ea5e9;background:#eff6ff;color:#0369a1;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600;">
+                <i class="bi bi-download"></i> Muat Turun
+              </a>
+            </div>
+          </div>
+
+          <!-- Fail 4: Excel CQI Projek V2 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid var(--border);border-radius:8px;background:#f8faff;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 12px;font-size:.75rem;font-weight:700;letter-spacing:.5px;">XLSX</div>
+              <div>
+                <div style="font-weight:600;font-size:.88rem;color:var(--primary);">Template Borang Pelaporan CQI PKS Sesi I 2026_2027_projek V2</div>
+                <div style="font-size:.75rem;color:var(--text-muted);">Microsoft Excel · 58 KB</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <a href="Template Borang Pelaporan CQI PKS Sesi I 2026_2027_projek V2.xlsx" target="_blank"
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                <i class="bi bi-eye"></i> Lihat
+              </a>
+              <a href="Template Borang Pelaporan CQI PKS Sesi I 2026_2027_projek V2.xlsx" download
+                 style="font-size:.78rem;padding:5px 12px;border-radius:6px;border:1px solid #0ea5e9;background:#eff6ff;color:#0369a1;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-weight:600;">
+                <i class="bi bi-download"></i> Muat Turun
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: UJIAN KEFAHAMAN OBE -->
+    <div id="view-ujian-obe" class="view">
+
+      <!-- KPI Summary Row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;">
+        <div class="stat-card" style="border-left:4px solid #003a70;">
+          <div class="dept-label">Jumlah Pensyarah</div>
+          <div class="dept-count" style="color:#003a70;">320</div>
+          <div class="dept-sub">PKS keseluruhan</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #198754;">
+          <div class="dept-label">Sudah Ujian</div>
+          <div class="dept-count" style="color:#198754;" id="ujian-kpi-sudah">88</div>
+          <div class="dept-sub" id="ujian-kpi-sudah-sub">27.5% daripada 320</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #dc3545;">
+          <div class="dept-label">Belum Ujian</div>
+          <div class="dept-count" style="color:#dc3545;" id="ujian-kpi-belum">232</div>
+          <div class="dept-sub" id="ujian-kpi-belum-sub">72.5% daripada 320</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #ffd700;">
+          <div class="dept-label">Kemajuan PKS</div>
+          <div class="dept-count" style="color:#003a70;font-size:1.5rem;" id="ujian-kpi-pct">27.5%</div>
+          <div style="margin-top:6px;height:6px;border-radius:4px;background:#e5e7eb;">
+            <div id="ujian-kpi-bar" style="width:27.5%;height:100%;border-radius:4px;background:#003a70;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Jabatan -->
+      <div class="section-card" style="margin-bottom:22px;">
+        <h5><i class="bi bi-bar-chart-steps"></i> Progress Ujian Mengikut Jabatan</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;" id="ujian-progress-grid"></div>
+      </div>
+
+      <!-- Senarai Pensyarah -->
+      <div class="section-card">
+        <h5><i class="bi bi-people-fill"></i> Senarai Keseluruhan Pensyarah – Status Ujian Kefahaman OBE</h5>
+
+        <!-- Status bar Google Sheets -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding:8px 12px;background:#f7f8fa;border:1px solid var(--border);border-radius:8px;">
+          <div id="ujian-fetch-status" style="font-size:.75rem;display:flex;align-items:center;gap:6px;">
+            <i class="bi bi-cloud-arrow-down" style="color:#6c757d;"></i> <span style="color:#6c757d;">Menghubungi Google Sheets...</span>
+          </div>
+          <button onclick="startUjianAutoRefresh()" style="font-size:.72rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--primary);cursor:pointer;display:flex;align-items:center;gap:4px;">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-bar">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="ujian-search" placeholder="Cari nama pensyarah..." oninput="renderUjianTable()" />
+          </div>
+          <div><label>Jabatan</label>
+            <select id="ujian-filter-dept" onchange="renderUjianTable()">
+              <option value="">Semua</option>
+              <option>JTMK</option><option>JKM</option><option>JKA</option>
+              <option>JKE</option><option>JP</option><option>JMSK</option>
+              <option>JKPK</option><option>JPA</option>
+            </select>
+          </div>
+          <div><label>Status Ujian</label>
+            <select id="ujian-filter-status" onchange="renderUjianTable()">
+              <option value="">Semua</option>
+              <option value="Sudah Ujian">Sudah Ujian</option>
+              <option value="Belum Ujian">Belum Ujian</option>
+            </select>
+          </div>
+          <div><label>Status Lulus</label>
+            <select id="ujian-filter-lulus" onchange="renderUjianTable()">
+              <option value="">Semua</option>
+              <option value="Lulus">🟢 Lulus</option>
+              <option value="Perlu Peningkatan">📝 Perlu Peningkatan</option>
+            </select>
+          </div>
+        </div>
+        <!-- Butang Download ZIP — render oleh JS ikut role -->
+        <div id="ujian-zip-btns" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;align-items:center;">
+          <span style="font-size:.75rem;font-weight:700;color:#15803d;display:flex;align-items:center;gap:5px;"><i class="bi bi-trophy-fill"></i> Download Badge Lulus:</span>
+          <div id="ujian-zip-btns-inner" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;" id="ujian-count"></div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nama Pensyarah</th><th>Jabatan</th><th>Status 2025</th><th>Status 2026</th><th>Status Lulus</th><th>Badge</th><th id="ujian-th-tindakan" style="display:none;">Tindakan</th></tr>
+            </thead>
+            <tbody id="ujian-tbody"></tbody>
+          </table>
+        </div>
+        <div id="ujian-empty" style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem;display:none;">
+          <i class="bi bi-inbox" style="font-size:1.8rem;display:block;margin-bottom:6px;"></i>Tiada rekod dijumpai.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</main>
+
+<!-- ══════════════════════ JAVASCRIPT ══════════════════════ -->
+<script>
+const DEPTS      = ['JKA','JKE','JKM','JP','JTMK','JKPK','JMSK','JPA','Lain-lain'];
+const CATS       = ['Kurikulum','Instruksional','Penilaian'];
+const MONTHS_MS  = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+
+const SEED_VERSION = 'v4';
+if (localStorage.getItem('obe_seed_ver') !== SEED_VERSION) {
+  localStorage.removeItem('obe_records');
+  localStorage.setItem('obe_seed_ver', SEED_VERSION);
+}
+let records = JSON.parse(localStorage.getItem('obe_records') || '[]');
+let currentUser = JSON.parse(localStorage.getItem('obe_user')    || 'null');
+
+const USERS = {
+  'admin':   { pass: 'admin123', dept: 'Semua', role: 'Admin',          nama: 'Admin SiLOBE'                                      },
+  'jka':     { pass: 'jka1',     dept: 'JKA',   role: 'Penyelaras',     nama: 'Penyelaras JKA'                                    },
+  'jke':     { pass: 'jke1',     dept: 'JKE',   role: 'Penyelaras',     nama: 'Penyelaras JKE'                                    },
+  'jkm':     { pass: 'jkm1',     dept: 'JKM',   role: 'Penyelaras',     nama: 'Penyelaras JKM'                                    },
+  'jp':      { pass: 'jp1',      dept: 'JP',    role: 'Penyelaras',     nama: 'Penyelaras JP'                                     },
+  'jtmk':    { pass: 'jtmk1',    dept: 'JTMK',  role: 'Penyelaras',     nama: 'Penyelaras JTMK'                                   },
+  'jkpk':    { pass: 'jkpk1',    dept: 'JKPK',  role: 'Penyelaras',     nama: 'Penyelaras JKPK'                                   },
+  'jmsk':    { pass: 'jmsk1',    dept: 'JMSK',  role: 'Penyelaras',     nama: 'Penyelaras JMSK'                                   },
+  'jpa':     { pass: 'jpa1',     dept: 'JPA',   role: 'Penyelaras',     nama: 'Penyelaras JPA'                                    },
+  // ── Ketua Jabatan ──
+  'kj_jka':  { pass: 'kjjka1',   dept: 'JKA',   role: 'Ketua Jabatan',  nama: 'Puan Nurazura Rali'                                },
+  'kj_jke':  { pass: 'kjjke1',   dept: 'JKE',   role: 'Ketua Jabatan',  nama: 'Azyyati Binti Basrol'                              },
+  'kj_jkm':  { pass: 'kjjkm1',   dept: 'JKM',   role: 'Ketua Jabatan',  nama: 'Rexca Anak Jamit'                                  },
+  'kj_jp':   { pass: 'kjjp1',    dept: 'JP',    role: 'Ketua Jabatan',  nama: 'Liu Yew Chiu @ Melissa Audrey Adriana Liu Abdullah' },
+  'kj_jtmk': { pass: 'kjjtmk1',  dept: 'JTMK',  role: 'Ketua Jabatan',  nama: 'Safinah Binti Nawawi'                              },
+  'kj_jkpk': { pass: 'kjjkpk1',  dept: 'JKPK',  role: 'Ketua Jabatan',  nama: 'Nur Lydia Binti Othman'                            },
+  'kj_jmsk': { pass: 'kjjmsk1',  dept: 'JMSK',  role: 'Ketua Jabatan',  nama: 'Nik Syahrul Faizal Bin Nik Mat'                    },
+  'kj_jpa':  { pass: 'kjjpa1',   dept: 'JPA',   role: 'Ketua Jabatan',  nama: 'Andy Anak Dan'                                     },
+};
+
+/* ─ SEED DATA SEBENAR ─ */
+// Paksa reseed kalau data lama (dummy) masih ada — semak via version flag
+if (localStorage.getItem('obe_seed_version') !== 'seed_v2') {
+  records = [];
+  localStorage.removeItem('obe_records');
+}
+if (records.length === 0) {
+  // [nama, jabatan, jenis, kaedah, lokasi, penganjur, kategoriPeserta, peserta, tarikhMula, tarikhTamat, objektif, impak, addedBy]
+  const seed = (typeof SEED_REAL !== 'undefined' ? SEED_REAL : [
+    ['Bengkel Penulisan Item Peperiksaan Berasaskan Taksonomi Bloom','JKM','Penilaian','Bersemuka','Bilik Kuliah JKM','Lembaga Peperiksaan','Pensyarah',32,'2026-06-18','2026-06-19','Menulis soalan peperiksaan yang menepati aras Taksonomi Bloom','Kualiti item peperiksaan meningkat, menepati aras kognitif yang ditetapkan','jkm'],
+    ['Seminar Kefahaman OBE Peringkat Jabatan','JP','Kurikulum','Bersemuka','Bilik Mesyuarat JP','Ketua Jabatan JP','Pensyarah & Pelajar',50,'2026-06-10','2026-06-10','Meningkatkan kefahaman warga JP terhadap konsep dan pelaksanaan OBE','Pensyarah dan pelajar JP lebih memahami matlamat OBE','jp'],
+    ['Kursus Penggunaan E-Portfolio dalam OBE','JTMK','Instruksional','Dalam Talian (Online)','Google Meet / Padlet','JTMK & Unit IT PKS','Pensyarah',28,'2026-06-05','2026-06-06','Menggunakan platform e-portfolio untuk dokumentasi pencapaian OBE','E-portfolio aktif digunakan dalam kalangan pensyarah JTMK','jtmk'],
+    ['Workshop Alignment Kurikulum dengan Standard Industri','JKPK','Kurikulum','Bersemuka','Bilik Mesyuarat JKPK','HRDC / Pihak Industri','Pensyarah',16,'2026-05-28','2026-05-29','Menyelaraskan kurikulum JKPK dengan keperluan dan standard industri semasa','Kurikulum lebih relevan dan diterima industri','jkpk'],
+    ['Bengkel Kajian Tindakan Berasaskan OBE','JMSK','Instruksional','Bersemuka','Bilik Seminar JMSK','Universiti Malaysia Sarawak','Pensyarah',14,'2026-05-20','2026-05-21','Melaksanakan kajian tindakan untuk penambahbaikan pengajaran dan pembelajaran','Laporan kajian tindakan lengkap, amalan pengajaran bertambah baik','jmsk'],
+    ['Program Mentor-Mentee OBE Pelajar Cemerlang','JPA','Instruksional','Bersemuka','Kelas JPA','Unit Hal Ehwal Pelajar','Pelajar',40,'2026-05-15','2026-05-15','Melaksanakan program mentor-mentee untuk meningkatkan pencapaian CLO pelajar','Pencapaian CLO pelajar meningkat, pelajar lebih bermotivasi','jpa'],
+    ['Latihan Penggunaan Aplikasi OBE Tracker','JKA','Penilaian','Dalam Talian (Online)','Zoom','Syarikat Perisian i-OBE','Pensyarah',20,'2026-05-06','2026-05-06','Melatih pensyarah JKA menggunakan aplikasi OBE Tracker untuk pemantauan CLO','Pemantauan CLO lebih sistematik menggunakan teknologi','jka'],
+    ['Seminar Persediaan Akreditasi Program JKE','JKE','Kurikulum','Bersemuka','Dewan Kuliah 3, PKS','BPTVi / MQA','Pensyarah',38,'2026-04-22','2026-04-23','Membuat persediaan dokumentasi OBE untuk proses akreditasi program JKE','Dokumentasi lengkap dan sedia untuk semakan akreditasi','jke'],
+    ['Kursus Pembelajaran Berasaskan Projek (PBL)','JKM','Instruksional','Bersemuka','Makmal JKM','Universiti Teknologi Malaysia','Pensyarah & Pelajar',55,'2026-04-15','2026-04-17','Melaksanakan PBL sebagai kaedah pengajaran utama dalam program JKM','Pelajar lebih aktif, kemahiran insaniah meningkat','jkm'],
+    ['Taklimat Pelaksanaan OBE kepada Pelajar Baru','JP','Instruksional','Bersemuka','Dewan Serbaguna PKS','Unit Hal Ehwal Pelajar','Pelajar',120,'2026-04-08','2026-04-08','Menerangkan konsep OBE dan harapan pembelajaran kepada pelajar baharu JP','Pelajar baharu faham sistem penilaian berasaskan OBE','jp'],
+    ['Workshop Penilaian Autentik dalam OBE','JTMK','Penilaian','Hibrid (Bersemuka & Online)','Bilik Kuliah JTMK / Teams','Institut Aminuddin Baki','Pensyarah',22,'2026-04-02','2026-04-03','Melaksanakan penilaian autentik yang menggambarkan pencapaian sebenar pelajar','Kaedah penilaian lebih holistik dan bermakna','jtmk'],
+    ['Bengkel Penambahbaikan Soal Selidik Maklum Balas Pelajar','JKPK','Penilaian','Bersemuka','Bilik Mesyuarat JKPK','Unit Pengurusan Akademik PKS','Pensyarah',18,'2026-03-25','2026-03-25','Menambahbaik borang soal selidik maklum balas pelajar agar relevan dengan CLO','Soal selidik baharu lebih mencerminkan pencapaian CLO','jkpk'],
+    ['Sesi Perkongsian Amalan Terbaik OBE','JMSK','Instruksional','Bersemuka','Bilik Seminar JMSK','JMSK','Pensyarah',25,'2026-03-18','2026-03-18','Berkongsi amalan terbaik pelaksanaan OBE dalam kalangan pensyarah JMSK','Pensyarah saling belajar dan menambah baik amalan OBE masing-masing','jmsk'],
+    ['Latihan Fasilitator OBE Jabatan','JPA','Kurikulum','Bersemuka','Bilik Kuliah JPA','Jabatan Pengajian Tinggi','Pensyarah',10,'2026-03-12','2026-03-13','Melatih fasilitator dalaman OBE untuk setiap jabatan di PKS','Fasilitator OBE jabatan sedia berkhidmat membantu rakan sejawat','jpa'],
+    ['Program Literasi OBE Pelajar Semester 1','JKA','Instruksional','Bersemuka','Dewan Kuliah JKA','Ketua Program JKA','Pelajar',85,'2026-03-05','2026-03-05','Meningkatkan literasi OBE dalam kalangan pelajar semester pertama','Pelajar lebih bersedia menghadapi sistem pembelajaran berasaskan OBE','jka'],
+    ['Bengkel Analisis Pencapaian CLO Akhir Semester','JKE','Penilaian','Bersemuka','Bilik Seminar JKE','Unit OBE PKS','Pensyarah',26,'2026-02-24','2026-02-25','Menganalisis data pencapaian CLO akhir semester untuk penambahbaikan','Laporan analisis CLO lengkap, tindakan pembetulan dirancang','jke'],
+    ['Kursus Penulisan Laporan OBE Berkualiti','JKM','Kurikulum','Bersemuka','Makmal Komputer JKM','Unit Pengurusan Kualiti PKS','Pensyarah',24,'2026-02-18','2026-02-19','Meningkatkan kualiti penulisan laporan OBE yang komprehensif dan tepat','Laporan OBE lebih berkualiti dan memenuhi standard KPT','jkm'],
+    ['Seminar OBE & Keperluan Pasaran Kerja 2026','JP','Kurikulum','Bersemuka','Dewan Serbaguna PKS','HRDF / Agensi Pekerjaan','Pensyarah & Pelajar',95,'2026-02-10','2026-02-10','Menghubungkaitkan outcome pembelajaran dengan keperluan pasaran kerja semasa','Pelajar dan pensyarah faham relevansi OBE dengan industri','jp'],
+    ['Taklimat Semakan Semula Kurikulum JTMK 2026','JTMK','Kurikulum','Bersemuka','Bilik Mesyuarat JTMK','BPTVi','Pensyarah',30,'2026-02-04','2026-02-05','Menyemak dan memurnikan kurikulum JTMK mengikut OBE dan keperluan industri','Kurikulum JTMK dikemaskini dan lebih relevan dengan industri teknologi','jtmk'],
+    ['Kursus Pembangunan Bahan Pengajaran Berpandukan OBE','JKPK','Instruksional','Dalam Talian (Online)','Google Meet','Unit Pembangunan Kurikulum PKS','Pensyarah',21,'2026-01-28','2026-01-29','Membangunkan bahan pengajaran yang diselaraskan dengan CLO dan PLO','Bahan pengajaran OBE yang lebih berkualiti dan relevan dihasilkan','jkpk'],
+    ['Bengkel Pelan Peningkatan OBE Jabatan JMSK','JMSK','Kurikulum','Bersemuka','Bilik Seminar JMSK','Pengurusan PKS','Pensyarah',12,'2026-01-20','2026-01-21','Membina pelan tindakan peningkatan pelaksanaan OBE di peringkat jabatan','Pelan peningkatan OBE JMSK lengkap dan sedia dilaksanakan','jmsk'],
+    ['Program Pengukuhan Kemahiran Insaniah Melalui OBE','JPA','Instruksional','Bersemuka','Gelanggang Sukan PKS','Unit Kokurikulum PKS','Pelajar',150,'2026-01-15','2026-01-15','Mengukuhkan kemahiran insaniah pelajar melalui aktiviti OBE bersepadu','Kemahiran insaniah pelajar meningkat, diiktiraf dalam rekod pembelajaran','jpa'],
+    ['Latihan Penggunaan LMS Berasaskan OBE','JKA','Instruksional','Dalam Talian (Online)','Zoom / Google Classroom','Unit IT PKS','Pensyarah',19,'2025-11-25','2025-11-26','Melatih pensyarah menggunakan LMS untuk pelaksanaan OBE secara digital','Penggunaan LMS meningkat, pembelajaran digital lebih terstruktur','jka'],
+    ['Workshop Continuous Quality Improvement (CQI) OBE','JKE','Kurikulum','Bersemuka','Bilik Seminar JKE','Unit Pengurusan Kualiti PKS','Pensyarah',27,'2025-11-18','2025-11-19','Melaksanakan proses CQI berdasarkan data pencapaian OBE semester lepas','Kitaran CQI berjalan, program JKE sentiasa ditambahbaik','jke'],
+    ['Seminar Inovasi Pedagogi Abad ke-21','JKM','Instruksional','Hibrid (Bersemuka & Online)','Dewan Kuliah JKM / Zoom','Kementerian Pendidikan Tinggi','Pensyarah',42,'2025-11-10','2025-11-11','Memperkenalkan kaedah inovatif P&P yang menyokong pencapaian OBE','Pensyarah JKM mengadaptasi teknik pengajaran baharu yang lebih berkesan','jkm'],
+    ['Taklimat Pelaksanaan OBE Semester Baharu','JP','Kurikulum','Bersemuka','Dewan Serbaguna PKS','Pengarah PKS','Pensyarah',200,'2025-11-03','2025-11-03','Memberi taklimat pelaksanaan OBE kepada seluruh warga akademik PKS','Seluruh pensyarah bersedia melaksanakan OBE pada semester baharu','jp'],
+    ['Bengkel Pembinaan Soalan Peperiksaan Akhir OBE','JTMK','Penilaian','Bersemuka','Bilik Seminar JTMK','Unit Peperiksaan PKS','Pensyarah',23,'2025-10-27','2025-10-28','Membina soalan peperiksaan akhir yang menepati standard OBE','Soalan peperiksaan berkualiti tinggi dan menepati aras CLO','jtmk'],
+    ['Kursus Penilaian Holistik Pelajar','JKPK','Penilaian','Bersemuka','Makmal JKPK','Institut Aminuddin Baki','Pelajar',38,'2025-10-20','2025-10-21','Melaksanakan penilaian holistik yang merangkumi domain kognitif, afektif dan psikomotor','Penilaian pelajar lebih menyeluruh dan bersesuaian dengan OBE','jkpk'],
+    ['Program Kolaborasi OBE dengan Industri','JMSK','Kurikulum','Bersemuka','Premis Industri Sarawak','Syarikat Rakan Industri','Pensyarah & Pelajar',60,'2025-10-14','2025-10-15','Menjalin kolaborasi dengan industri untuk memastikan outcome pembelajaran relevan','Hubungan industri-akademia lebih kukuh, outcome relevan dengan keperluan kerja','jmsk'],
+    ['Latihan Pemantauan dan Penilaian OBE','JPA','Penilaian','Bersemuka','Bilik Kuliah JPA','Unit Pengurusan Akademik PKS','Pensyarah',16,'2025-10-07','2025-10-08','Melatih penyelaras OBE JPA dalam pemantauan dan penilaian pelaksanaan OBE','Sistem pemantauan OBE JPA lebih berkesan dan teratur','jpa'],
+    ['Bengkel Penyelarasan OBE Merentas Jabatan','Lain-lain','Kurikulum','Bersemuka','Dewan Serbaguna PKS','Unit Pengurusan Akademik PKS','Pensyarah',65,'2026-10-05','2026-10-06','Menyelaras pelaksanaan OBE merentas semua jabatan akademik PKS','Keseragaman pelaksanaan OBE berjaya dicapai di peringkat institusi','admin'],
+    ['Taklimat OBE kepada Unit Sokongan PKS','Lain-lain','Instruksional','Bersemuka','Bilik Mesyuarat Utama PKS','Pengarah PKS','Pensyarah',40,'2026-09-22','2026-09-22','Memperkenalkan konsep OBE kepada staf unit sokongan bagi meningkatkan pemahaman','Staf sokongan lebih faham peranan mereka dalam menyokong pelaksanaan OBE','admin'],
+    ['Seminar Jaminan Kualiti & OBE','Lain-lain','Penilaian','Bersemuka','Dewan Kuliah 1, PKS','Unit Jaminan Kualiti PKS','Pensyarah',55,'2026-08-15','2026-08-16','Menghubungkaitkan proses jaminan kualiti dengan keperluan OBE','Proses QA dikemaskini selaras dengan standard OBE','admin'],
+  ]);
+
+  seed.forEach(([nama,jab,jenis,kaedah,lokasi,penganjur,katPes,peserta,mula,tamat,obj,impak,addedBy]) => {
+    const dMula  = new Date(mula);
+    const dTamat = new Date(tamat);
+    const tempoh = Math.round((dTamat - dMula) / 86400000) + 1;
+    records.push({
+      id: Date.now() + Math.random(),
+      tarikhMula: mula, tarikhTamat: tamat, tempoh,
+      tarikh: mula,
+      nama, jabatan: jab, jenis, kaedah, lokasi, penganjur,
+      kategoriPeserta: katPes,
+      peserta, objektif: obj, impak, files: [],
+      addedBy
+    });
+  });
+  saveRecords();
+  localStorage.setItem('obe_seed_version', 'seed_v2');
+}
+
+function saveRecords() { localStorage.setItem('obe_records', JSON.stringify(records)); }
+
+/* ─ AUTH ─ */
+/* ─ PENGESAHAN 6 BULAN ─ */
+// Simpan: { "JKA_1_2026": { nama, tarikh }, "JKA_2_2026": { nama, tarikh }, ... }
+let pengesahan6Bulan = JSON.parse(localStorage.getItem('obe_pengesahan6b') || '{}');
+
+function savePengesahan() {
+  localStorage.setItem('obe_pengesahan6b', JSON.stringify(pengesahan6Bulan));
+}
+
+function getPengesahanKey(dept, separuh, year) {
+  return `${dept}_${separuh}_${year}`;
+}
+
+function sahkanLaporan6Bulan() {
+  if (!currentUser || currentUser.role !== 'Ketua Jabatan') return;
+  const separuh = document.getElementById('l6-separuh').value;
+  const year    = document.getElementById('l6-year').value || new Date().getFullYear();
+  const key     = getPengesahanKey(currentUser.dept, separuh, year);
+  const kini    = new Date().toLocaleDateString('ms-MY', {day:'numeric', month:'long', year:'numeric'});
+  pengesahan6Bulan[key] = { nama: USERS[currentUser.username].nama, tarikh: kini };
+  savePengesahan();
+  render6Bulan();
+}
+
+function doLogin() {
+  const u   = document.getElementById('login-user').value.trim().toLowerCase();
+  const p   = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+
+  if (USERS[u] && USERS[u].pass === p) {
+    currentUser = { username: u, dept: USERS[u].dept, role: USERS[u].role };
+    localStorage.setItem('obe_user', JSON.stringify(currentUser));
+    applyLoginState();
+  } else {
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('obe_user');
+  applyLoginState();
+}
+
+function applyLoginState() {
+  const in_ = !!currentUser;
+  document.getElementById('login-form-mini').style.display = in_ ? 'none' : 'block';
+  document.getElementById('user-info').classList.toggle('show', in_);
+  document.getElementById('logout-btn').style.display = in_ ? 'block' : 'none';
+
+  if (in_) {
+    const roleIcon = currentUser.role === 'Admin' ? '👑' : currentUser.role === 'Ketua Jabatan' ? '🏛️' : '✏️';
+    const roleLabel = roleIcon + ' ' + currentUser.role;
+    document.getElementById('topbar-user').textContent = currentUser.username + ' — ' + roleLabel;
+    document.getElementById('user-name-display').textContent = USERS[currentUser.username]?.nama || currentUser.username;
+    document.getElementById('user-dept-display').textContent =
+      (currentUser.dept === 'Semua' ? 'Semua Jabatan' : currentUser.dept) + ' · ' + currentUser.role;
+    document.getElementById('user-avatar').textContent = currentUser.username[0].toUpperCase();
+    const fj = document.getElementById('f-jabatan');
+    if (fj && currentUser.dept !== 'Semua') fj.value = currentUser.dept;
+    // KJ tidak boleh input laporan
+    const isKJ = currentUser.role === 'Ketua Jabatan';
+    document.getElementById('input-locked').style.display = isKJ ? 'flex' : 'none';
+    document.getElementById('input-form-area').style.display = isKJ ? 'none' : 'block';
+    if (isKJ) {
+      document.getElementById('input-locked-msg').innerHTML =
+        `Akaun <b>Ketua Jabatan</b> tidak mempunyai akses untuk input laporan.<br/>Fungsi anda adalah untuk <b>mengesahkan Laporan 6 Bulan</b> jabatan anda.`;
+    } else {
+      document.getElementById('input-locked-msg').innerHTML =
+        `Hanya <b>Penyelaras OBE Jabatan</b> boleh akses bahagian ini.<br/>Sila hubungi Administrator untuk maklumat lanjut.`;
+    }
+    // Laporan 6 Bulan — tunjuk content, sembunyi locked
+    document.getElementById('l6-locked').style.display = 'none';
+    document.getElementById('l6-content').style.display = 'block';
+    // Tunjuk banner pengesahan jika KJ dan bulan Julai/Disember
+    showBannerPengesahan();
+  } else {
+    document.getElementById('topbar-user').innerHTML =
+      '<span style="color:#9ca3af;font-size:.75rem;"><i class="bi bi-eye"></i> Mod Tetamu — Log masuk untuk input laporan</span>';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('input-locked').style.display = 'flex';
+    document.getElementById('input-form-area').style.display = 'none';
+    // Laporan 6 Bulan — tunjuk locked, sembunyi content
+    document.getElementById('l6-locked').style.display = 'flex';
+    document.getElementById('l6-content').style.display = 'none';
+    hideBannerPengesahan();
+  }
+  refreshAll();
+}
+
+function showBannerPengesahan() {
+  const banner = document.getElementById('banner-pengesahan');
+  if (!banner || !currentUser || currentUser.role !== 'Ketua Jabatan') {
+    if (banner) banner.style.display = 'none';
+    return;
+  }
+  const bulan = new Date().getMonth() + 1; // 1-12
+  const year  = new Date().getFullYear();
+  if (bulan === 7 || bulan === 12) {
+    const separuh = bulan === 7 ? '1' : '2';
+    const labelSeparuh = bulan === 7 ? 'Jan – Jun' : 'Jul – Dis';
+    const key = getPengesahanKey(currentUser.dept, separuh, year);
+    if (!pengesahan6Bulan[key]) {
+      banner.style.display = 'flex';
+      document.getElementById('banner-pengesahan-text').innerHTML =
+        `<i class="bi bi-bell-fill" style="margin-right:8px;"></i><b>Peringatan:</b> Laporan 6 Bulan <b>${labelSeparuh} ${year}</b> bagi jabatan <b>${currentUser.dept}</b> belum disahkan. Sila ke <a href="#" onclick="showView('laporan-6bulan', null);return false;" style="color:#fff;text-decoration:underline;">Laporan 6 Bulan</a> untuk sahkan.`;
+    } else {
+      banner.style.display = 'none';
+    }
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function hideBannerPengesahan() {
+  const banner = document.getElementById('banner-pengesahan');
+  if (banner) banner.style.display = 'none';
+}
+
+/* ─ NAVIGATION ─ */
+const viewTitles = {
+  dashboard:        ['Dashboard OBE',        'Ringkasan Keseluruhan Aktiviti OBE'],
+  input:            ['Input Laporan',         'Tambah Rekod Aktiviti OBE Baharu'],
+  senarai:          ['Senarai Laporan',        'Semak & Urus Rekod Aktiviti OBE'],
+  'stat-jabatan':   ['Statistik Jabatan',     'Analisis Aktiviti Mengikut Jabatan'],
+  'stat-kategori':  ['Statistik Kategori',    'Analisis Mengikut Kategori OBE'],
+  'laporan-bulanan':['Laporan Bulanan',        'Paparan Aktiviti Secara Bulanan'],
+  'laporan-tahunan':['Laporan Tahunan',        'Paparan Aktiviti Secara Tahunan'],
+  'laporan-6bulan': ['Laporan Keseluruhan 6 Bulan', 'Ringkasan Aktiviti OBE Separuh Tahun – Politeknik Kuching Sarawak'],
+  'portal-obe':     ['Portal OBE PKS',         'Politeknik Kuching Sarawak – Padlet OBE'],
+  'cqi-pks':        ['CQI PKS',                'Dokumen Continuous Quality Improvement – Sesi I 2026/2027'],
+  'ujian-obe':      ['Ujian Kefahaman OBE',    'Status Ujian Asas OBE – Politeknik Kuching Sarawak'],
+};
+
+function showView(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const t = viewTitles[name] || ['OBE',''];
+  document.getElementById('topbar-title').textContent = t[0];
+  document.getElementById('topbar-sub').textContent   = t[1];
+  if (name === 'dashboard')        renderDashboard();
+  if (name === 'stat-jabatan')     renderStatJabatan();
+  if (name === 'stat-kategori')    renderStatKategori();
+  if (name === 'laporan-bulanan')  renderBulanan();
+  if (name === 'laporan-tahunan')  renderTahunan();
+  if (name === 'laporan-6bulan')   render6Bulan();
+  if (name === 'senarai')          renderTable();
+  if (name === 'ujian-obe')        { startUjianAutoRefresh(); updateUjianKPI(); renderUjianTable(); }
+  if (name === 'input' && !currentUser) {
+    document.getElementById('input-locked').style.display = 'flex';
+    document.getElementById('input-form-area').style.display = 'none';
+  }
+}
+ /* ─ KIRA TEMPOH ─ */
+function kiraTempoh(prefix) {
+  const mula  = document.getElementById(prefix + '-tarikh-mula').value;
+  const tamat = document.getElementById(prefix + '-tarikh-tamat').value;
+  const disp  = document.getElementById(prefix + '-tempoh-display');
+  const txt   = document.getElementById(prefix + '-tempoh-text');
+  if (!mula || !tamat) { disp.style.display = 'none'; return; }
+  const dMula  = new Date(mula);
+  const dTamat = new Date(tamat);
+  if (dTamat < dMula) {
+    disp.style.background = '#fef2f2';
+    disp.style.borderColor = '#fca5a5';
+    disp.style.color = '#dc2626';
+    txt.textContent = 'Tarikh tamat tidak boleh lebih awal daripada tarikh mula!';
+    disp.style.display = 'flex';
+    return;
+  }
+  const hari = Math.round((dTamat - dMula) / 86400000) + 1;
+  disp.style.background = '#f0fdf4';
+  disp.style.borderColor = '#bbf7d0';
+  disp.style.color = '#15803d';
+  txt.textContent = `Tempoh Aktiviti: ${hari} hari (${mula} hingga ${tamat})`;
+  disp.style.display = 'flex';
+}
+
+/* ─ FORM ─ */
+function submitForm(e) {
+  e.preventDefault();
+  if (!currentUser) { alert('Sila log masuk dahulu.'); return; }
+  const mula  = document.getElementById('f-tarikh-mula').value;
+  const tamat = document.getElementById('f-tarikh-tamat').value;
+  if (new Date(tamat) < new Date(mula)) { alert('Tarikh tamat tidak boleh lebih awal daripada tarikh mula!'); return; }
+  const tempoh = Math.round((new Date(tamat) - new Date(mula)) / 86400000) + 1;
+  const rec = {
+    id:          Date.now(),
+    tarikhMula:  mula,
+    tarikhTamat: tamat,
+    tempoh:      tempoh,
+    tarikh:      mula,            // backward-compat untuk filter
+    nama:        document.getElementById('f-nama').value,
+    jabatan:     getJabatanValue('f'),
+    penganjur:   document.getElementById('f-penganjur').value,
+    jenis:       document.getElementById('f-jenis').value,
+    kaedah:      document.getElementById('f-kaedah').value,
+    lokasi:      document.getElementById('f-lokasi').value,
+    kategoriPeserta: document.getElementById('f-kategori-peserta').value,
+    peserta:     parseInt(document.getElementById('f-peserta').value),
+    objektif:    document.getElementById('f-objektif').value,
+    impak:       document.getElementById('f-impak').value,
+    files:       [],
+    addedBy:     currentUser.username,
+  };
+  records.unshift(rec);
+  saveRecords();
+  const s = document.getElementById('form-success');
+  s.style.display = 'block';
+  setTimeout(() => s.style.display = 'none', 3500);
+  document.getElementById('obe-form').reset();
+  document.getElementById('f-tempoh-display').style.display = 'none';
+  document.getElementById('f-kategori-peserta').value = '';
+  document.getElementById('f-lainlain-group').style.display = 'none';
+  document.getElementById('f-jabatan-lain').required = false;
+  if (currentUser && currentUser.dept !== 'Semua') document.getElementById('f-jabatan').value = currentUser.dept;
+  refreshYearSelects();
+  renderDashboard();
+}
+
+function resetForm() {
+  document.getElementById('obe-form').reset();
+  document.getElementById('f-tempoh-display').style.display = 'none';
+  document.getElementById('f-kategori-peserta').value = '';
+  document.getElementById('f-lainlain-group').style.display = 'none';
+  document.getElementById('f-jabatan-lain').required = false;
+  if (currentUser && currentUser.dept !== 'Semua') document.getElementById('f-jabatan').value = currentUser.dept;
+}
+
+function deleteRecord(id) {
+  if (!confirm('Padam rekod ini?')) return;
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  renderTable();
+  renderDashboard();
+}
+
+/* ─ HELPERS ─ */
+function badgeHtml(jenis) {
+  const cls = { Kurikulum:'badge-kurikulum', Instruksional:'badge-instruksional', Penilaian:'badge-penilaian' };
+  return `<span class="${cls[jenis]||''}">${jenis}</span>`;
+}
+
+function filteredRecords(dept='', cat='', year='', month='') {
+  return records.filter(r =>
+    (!dept  || r.jabatan === dept) &&
+    (!cat   || r.jenis   === cat)  &&
+    (!year  || r.tarikh.startsWith(year)) &&
+    (!month || r.tarikh.slice(5,7) === month)
+  );
+}
+
+function refreshYearSelects() {
+  const years = [...new Set(records.map(r => r.tarikh.slice(0,4)))].sort().reverse();
+  ['filter-year','lb-year','lt-year','l6-year'].forEach(id => {
+    const s = document.getElementById(id);
+    const cur = s.value;
+    s.innerHTML = '<option value="">Semua</option>';
+    years.forEach(y => { s.innerHTML += `<option value="${y}"${y===cur?' selected':''}>${y}</option>`; });
+  });
+}
+
+/* ─ DASHBOARD ─ */
+let chartDeptInst, chartCatInst;
+
+function renderDashboard() {
+  // Stat cards
+  const c = document.getElementById('dept-cards');
+  c.innerHTML = '';
+  const max = Math.max(...DEPTS.map(d => records.filter(r=>r.jabatan===d).length), 1);
+  DEPTS.forEach(d => {
+    const n   = records.filter(r=>r.jabatan===d).length;
+    const pct = Math.round(n / max * 100);
+    const isLain = d === 'Lain-lain';
+    c.innerHTML += `<div class="stat-card"${isLain ? ' style="border-left:3px solid #9ca3af;"' : ''}>
+      <div class="dept-label" style="${isLain ? 'color:#6b7280;' : ''}">${d}</div>
+      <div class="dept-count">${n}</div>
+      <div class="dept-sub">aktiviti</div>
+      <div class="dept-bar"><div class="dept-bar-fill" style="width:${pct}%;${isLain ? 'background:#9ca3af;' : ''}"></div></div>
+    </div>`;
+  });
+
+  // Recent table
+  const tbody = document.getElementById('recent-tbody');
+  tbody.innerHTML = '';
+  records.slice(0,5).forEach(r => {
+    tbody.innerHTML += `<tr>
+      <td>${r.tarikh}</td><td>${r.nama}</td>
+      <td><b>${r.jabatan}</b></td><td>${badgeHtml(r.jenis)}</td><td>${r.peserta}</td>
+    </tr>`;
+  });
+
+  // Bar chart – by dept
+  if (chartDeptInst) chartDeptInst.destroy();
+  chartDeptInst = new Chart(document.getElementById('chartDept'), {
+    type: 'bar',
+    data: {
+      labels: DEPTS,
+      datasets: [{ label: 'Aktiviti', data: DEPTS.map(d=>records.filter(r=>r.jabatan===d).length),
+        backgroundColor: '#003a70', borderRadius: 6 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} }
+  });
+
+  // Doughnut chart – by category
+  if (chartCatInst) chartCatInst.destroy();
+  chartCatInst = new Chart(document.getElementById('chartCat'), {
+    type: 'doughnut',
+    data: {
+      labels: CATS,
+      datasets: [{ data: CATS.map(c=>records.filter(r=>r.jenis===c).length),
+        backgroundColor: ['#003a70','#0ea5e9','#fbbf24'], borderWidth:2 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+  });
+}
+
+/* ─ SENARAI TABLE ─ */
+function renderTable() {
+  const dept   = document.getElementById('filter-dept').value;
+  const cat    = document.getElementById('filter-cat').value;
+  const year   = document.getElementById('filter-year').value;
+  const month  = document.getElementById('filter-month').value;
+  const search = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+  let data = filteredRecords(dept, cat, year, month);
+
+  // text search across nama, penganjur, jabatan, jenis, objektif
+  if (search) {
+    data = data.filter(r =>
+      r.nama.toLowerCase().includes(search) ||
+      r.penganjur.toLowerCase().includes(search) ||
+      r.jabatan.toLowerCase().includes(search) ||
+      r.jenis.toLowerCase().includes(search) ||
+      (r.objektif || '').toLowerCase().includes(search) ||
+      (r.impak || '').toLowerCase().includes(search)
+    );
+  }
+
+  const tbody = document.getElementById('main-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('table-empty').style.display = data.length ? 'none' : 'block';
+
+  const countEl = document.getElementById('search-result-count');
+  if (search || dept || cat || year || month) {
+    countEl.textContent = `Menunjukkan ${data.length} daripada ${records.length} rekod`;
+  } else {
+    countEl.textContent = '';
+  }
+
+  data.forEach((r, i) => {
+    const canDel = currentUser && currentUser.role === 'Admin';
+    const highlight = (text) => {
+      if (!search) return text;
+      const re = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+      return text.replace(re, '<mark style="background:#fef08a;padding:0 1px;border-radius:2px;">$1</mark>');
+    };
+    const kaedahIcon = { 'Bersemuka':'bi-people-fill', 'Dalam Talian (Online)':'bi-camera-video-fill', 'Hibrid (Bersemuka & Online)':'bi-cast' };
+    const kaedahBadge = r.kaedah
+      ? `<span style="font-size:.72rem;display:inline-flex;align-items:center;gap:3px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:12px;padding:2px 7px;white-space:nowrap;">
+           <i class="bi ${kaedahIcon[r.kaedah]||'bi-display'}"></i> ${r.kaedah}
+         </span>`
+      : '<span style="color:var(--text-muted)">—</span>';
+    tbody.innerHTML += `<tr style="cursor:pointer;" onclick="openReportModal(${r.id})" title="Klik untuk lihat laporan penuh">
+      <td>${i+1}</td>
+      <td style="white-space:nowrap;">${r.tarikhMula || r.tarikh}</td>
+      <td style="white-space:nowrap;">${r.tarikhTamat || r.tarikh}</td>
+      <td style="text-align:center;">${r.tempoh || 1} hari</td>
+      <td>${highlight(r.nama)}</td>
+      <td><b>${highlight(r.jabatan)}</b></td>
+      <td>${highlight(r.penganjur)}</td>
+      <td>${kaedahBadge}</td>
+      <td style="font-size:.75rem;color:#374151;">${r.lokasi ? highlight(r.lokasi) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${badgeHtml(r.jenis)}</td>
+      <td style="text-align:center;font-weight:600;">${r.peserta}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+        <button class="btn-primary-custom" style="padding:4px 9px;font-size:.72rem;margin-bottom:3px;" onclick="openReportModal(${r.id})"><i class="bi bi-eye"></i> Lihat</button>
+        ${canDel ? `<br><button class="btn-success-custom" style="padding:4px 9px;font-size:.72rem;margin-bottom:3px;" onclick="openEditModal(${r.id})"><i class="bi bi-pencil"></i> Edit</button>` : ''}
+        ${canDel ? `<br><button class="btn-danger-custom" onclick="deleteRecord(${r.id})"><i class="bi bi-trash"></i></button>` : ''}
+      </td>
+    </tr>`;
+  });
+}
+
+/* ─ MODAL LAPORAN PENUH ─ */
+let _printContent = '';
+
+function openReportModal(id) {
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+
+  document.getElementById('modal-report-title').textContent = r.nama;
+  document.getElementById('modal-report-sub').textContent =
+    `${r.jabatan} · ${r.jenis} · ${r.tarikh}`;
+
+  const catColor = { Kurikulum:'#1d4ed8', Instruksional:'#15803d', Penilaian:'#92400e' };
+  const catBg    = { Kurikulum:'#dbeafe', Instruksional:'#dcfce7', Penilaian:'#fef3c7' };
+
+  const bodyHtml = `
+    <div class="report-meta-grid">
+      <div class="meta-item"><div class="meta-label">Tarikh Aktiviti</div><div class="meta-value">${r.tarikh}</div></div>
+      <div class="meta-item"><div class="meta-label">Jabatan</div><div class="meta-value">${r.jabatan}</div></div>
+      <div class="meta-item"><div class="meta-label">Penganjur</div><div class="meta-value">${r.penganjur}</div></div>
+      <div class="meta-item"><div class="meta-label">Bilangan Peserta</div><div class="meta-value">${r.peserta} orang</div></div>
+      <div class="meta-item"><div class="meta-label">Kaedah Pelaksanaan</div><div class="meta-value">${r.kaedah || '—'}</div></div>
+      <div class="meta-item"><div class="meta-label">Lokasi / Platform</div><div class="meta-value">${r.lokasi || '—'}</div></div>
+      <div class="meta-item"><div class="meta-label">Kategori Aktiviti</div>
+        <div class="meta-value"><span style="background:${catBg[r.jenis]||'#f3f4f6'};color:${catColor[r.jenis]||'#374151'};padding:2px 10px;border-radius:20px;font-size:.8rem;">${r.jenis}</span></div>
+      </div>
+      <div class="meta-item"><div class="meta-label">Dimasukkan Oleh</div><div class="meta-value">${r.addedBy || '—'}</div></div>
+    </div>
+
+    <div class="report-section-title">Objektif Program</div>
+    <div class="report-text-block">${r.objektif || '—'}</div>
+
+    <div class="report-section-title">Impak Program</div>
+    <div class="report-text-block">${r.impak || '—'}</div>
+
+    <div class="report-section-title" style="margin-top:28px;">Pengesahan</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;margin-top:10px;">
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:#fafafa;">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">Disediakan Oleh</div>
+        <div style="height:48px;border-bottom:1px dashed #d1d5db;margin-bottom:8px;"></div>
+        <div style="font-size:.78rem;font-weight:600;color:#374151;">Penyelaras OBE Jabatan / Setiausaha OBE</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Nama: ______________________</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Cop: _____________________</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Tarikh: ___________________</div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:#fafafa;">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:10px;">Disahkan Oleh</div>
+        <div style="height:48px;border-bottom:1px dashed #d1d5db;margin-bottom:8px;"></div>
+        <div style="font-size:.78rem;font-weight:600;color:#374151;">Ketua Unit / Ketua Program / Ketua Jabatan / TPA</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Nama: ______________________</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Cop: _____________________</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">Tarikh: ___________________</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modal-report-body').innerHTML = bodyHtml;
+
+  // build print content
+  _printContent = `
+    <html><head><meta charset="UTF-8">
+    <title>Laporan OBE – ${r.nama}</title>
+    <style>
+      body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1f2328; margin: 0; padding: 0; }
+      .print-wrap { max-width: 720px; margin: 0 auto; padding: 32px 28px; }
+      .print-header { background: #003a70; color: #fff; padding: 20px 24px; border-radius: 0; margin-bottom: 24px; }
+      .print-header .ph-top { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+      .print-header .ph-logo { width:52px; height:52px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#003a70; font-size:.85rem; flex-shrink:0; }
+      .print-header h1 { font-size: 1.05rem; font-weight: 700; margin: 0 0 3px; }
+      .print-header .ph-inst { font-size:.8rem; font-weight:700; color:#ffd700; letter-spacing:.3px; }
+      .print-header .ph-sub  { font-size:.72rem; color:rgba(255,255,255,.7); margin-top:1px; }
+      .print-header hr { border:none; border-top:1px solid rgba(255,255,255,.25); margin:10px 0 8px; }
+      .print-header .ph-meta { font-size:.75rem; color:rgba(255,255,255,.8); display:flex; gap:18px; flex-wrap:wrap; }
+      .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; background: #f7f8fa; }
+      .meta-item .ml { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
+      .meta-item .mv { font-size: .88rem; font-weight: 600; margin-top: 2px; }
+      .sec-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #003a70; border-bottom: 2px solid #ffd700; padding-bottom: 3px; margin: 18px 0 8px; }
+      .text-block { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; font-size: .85rem; line-height: 1.6; white-space: pre-wrap; min-height:40px; }
+      .sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:10px; }
+      .sign-box { border:1px solid #e5e7eb; border-radius:6px; padding:14px 16px; background:#fafafa; }
+      .sign-box .sign-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#6c757d; margin-bottom:8px; }
+      .sign-line { height:50px; border-bottom:1px dashed #d1d5db; margin-bottom:8px; }
+      .sign-box .sign-name { font-size:.8rem; font-weight:700; }
+      .sign-box .sign-field { font-size:.75rem; color:#6c757d; margin-top:5px; }
+      .print-footer { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: .7rem; color: #9ca3af; text-align: center; }
+      @page { margin: 18mm 14mm; }
+      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    </style></head><body>
+    <div class="print-wrap">
+      <div class="print-header">
+        <div class="ph-top">
+          <div class="ph-logo"><img src="logo.png" alt="PKS" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" onerror="this.style.display='none';this.parentElement.textContent='PKS';" /></div>
+          <div>
+            <div class="ph-inst">POLITEKNIK KUCHING SARAWAK</div>
+            <div class="ph-sub">Sistem Laporan OBE (SiLOBE) – Outcomes Based Education</div>
+          </div>
+        </div>
+        <hr/>
+        <h1>${r.nama}</h1>
+        <div class="ph-meta">
+          <span>📅 ${r.tarikh}</span>
+          <span>🏢 ${r.jabatan}</span>
+          <span>${r.kaedah ? (r.kaedah.includes('Online') ? '💻' : r.kaedah.includes('Hibrid') ? '🔀' : '👥') + ' ' + r.kaedah : ''}</span>
+          <span>${r.lokasi ? '📍 ' + r.lokasi : ''}</span>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item"><div class="ml">Tarikh Aktiviti</div><div class="mv">${r.tarikh}</div></div>
+        <div class="meta-item"><div class="ml">Jabatan</div><div class="mv">${r.jabatan}</div></div>
+        <div class="meta-item"><div class="ml">Penganjur</div><div class="mv">${r.penganjur}</div></div>
+        <div class="meta-item"><div class="ml">Bilangan Peserta</div><div class="mv">${r.peserta} orang</div></div>
+        <div class="meta-item"><div class="ml">Kaedah Pelaksanaan</div><div class="mv">${r.kaedah || '—'}</div></div>
+        <div class="meta-item"><div class="ml">Lokasi / Platform</div><div class="mv">${r.lokasi || '—'}</div></div>
+        <div class="meta-item"><div class="ml">Kategori</div><div class="mv">${r.jenis}</div></div>
+        <div class="meta-item"><div class="ml">Dimasukkan Oleh</div><div class="mv">${r.addedBy || '—'}</div></div>
+      </div>
+      <div class="sec-title">Objektif Program</div>
+      <div class="text-block">${r.objektif || '—'}</div>
+      <div class="sec-title">Impak Program</div>
+      <div class="text-block">${r.impak || '—'}</div>
+
+      <div class="sec-title" style="margin-top:32px;">Pengesahan</div>
+      <div class="sign-grid">
+        <div class="sign-box">
+          <div class="sign-label">Disediakan Oleh</div>
+          <div class="sign-line"></div>
+          <div class="sign-name">Penyelaras OBE Jabatan / Setiausaha OBE</div>
+          <div class="sign-field">Nama &nbsp;&nbsp;&nbsp;: _______________________</div>
+          <div class="sign-field">Cop &nbsp;&nbsp;&nbsp;&nbsp;: _______________________</div>
+          <div class="sign-field">Tarikh &nbsp;: _______________________</div>
+        </div>
+        <div class="sign-box">
+          <div class="sign-label">Disahkan Oleh</div>
+          <div class="sign-line"></div>
+          <div class="sign-name">Ketua Unit / Ketua Program / Ketua Jabatan / TPA</div>
+          <div class="sign-field">Nama &nbsp;&nbsp;&nbsp;: _______________________</div>
+          <div class="sign-field">Cop &nbsp;&nbsp;&nbsp;&nbsp;: _______________________</div>
+          <div class="sign-field">Tarikh &nbsp;: _______________________</div>
+        </div>
+      </div>
+
+      <div class="print-footer">Dicetak daripada Sistem Laporan OBE (SiLOBE) – Politeknik Kuching Sarawak &nbsp;|&nbsp; ${new Date().toLocaleDateString('ms-MY',{day:'numeric',month:'long',year:'numeric'})}</div>
+    </div>
+    </body></html>`;
+
+  document.getElementById('report-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReportModal(e, force) {
+  if (!force && e && document.getElementById('report-modal-box').contains(e.target)) return;
+  document.getElementById('report-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function printReport() {
+  const w = window.open('', '_blank', 'width=820,height=700');
+  w.document.write(_printContent);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { w.print(); }, 400);
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeReportModal(null, true);
+    closeEditModal(null, true);
+  }
+});
+
+/* ─ STATISTIK JABATAN ─ */
+let chartDeptFullInst;
+function renderStatJabatan() {
+  const c = document.getElementById('stat-dept-cards');
+  c.innerHTML = '';
+  DEPTS.forEach(d => {
+    const n = records.filter(r=>r.jabatan===d).length;
+    const isLain = d === 'Lain-lain';
+    c.innerHTML += `<div class="stat-card"${isLain ? ' style="border-left:3px solid #9ca3af;"' : ''}>
+      <div class="dept-label" style="${isLain ? 'color:#6b7280;' : ''}">${d}</div>
+      <div class="dept-count">${n}</div>
+      <div class="dept-sub">aktiviti</div>
+    </div>`;
+  });
+  const tbody = document.getElementById('stat-dept-tbody');
+  tbody.innerHTML = '';
+  DEPTS.forEach(d => {
+    const rows = records.filter(r=>r.jabatan===d);
+    const kur  = rows.filter(r=>r.jenis==='Kurikulum').length;
+    const ins  = rows.filter(r=>r.jenis==='Instruksional').length;
+    const pen  = rows.filter(r=>r.jenis==='Penilaian').length;
+    const pes  = rows.reduce((s,r)=>s+r.peserta, 0);
+    const style = d === 'Lain-lain' ? ' style="color:#6b7280;"' : '';
+    tbody.innerHTML += `<tr>
+      <td><b${style}>${d}</b></td><td>${kur}</td><td>${ins}</td><td>${pen}</td>
+      <td><b>${rows.length}</b></td><td>${pes}</td>
+    </tr>`;
+  });
+  if (chartDeptFullInst) chartDeptFullInst.destroy();
+  chartDeptFullInst = new Chart(document.getElementById('chartDeptFull'), {
+    type: 'bar',
+    data: {
+      labels: DEPTS,
+      datasets: CATS.map((cat,i) => ({
+        label: cat,
+        data: DEPTS.map(d => records.filter(r=>r.jabatan===d && r.jenis===cat).length),
+        backgroundColor: ['#003a70','#0ea5e9','#fbbf24'][i], borderRadius:4
+      }))
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}} }
+  });
+}
+
+/* ─ STATISTIK KATEGORI ─ */
+let chartCatFullInst, chartCatDeptInst;
+function renderStatKategori() {
+  if (chartCatFullInst) chartCatFullInst.destroy();
+  chartCatFullInst = new Chart(document.getElementById('chartCatFull'), {
+    type: 'pie',
+    data: {
+      labels: CATS,
+      datasets: [{ data: CATS.map(c=>records.filter(r=>r.jenis===c).length),
+        backgroundColor:['#003a70','#0ea5e9','#fbbf24'], borderWidth:2 }]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}}}
+  });
+  if (chartCatDeptInst) chartCatDeptInst.destroy();
+  chartCatDeptInst = new Chart(document.getElementById('chartCatDept'), {
+    type: 'bar',
+    data: {
+      labels: DEPTS,
+      datasets: CATS.map((cat,i)=>({
+        label: cat,
+        data: DEPTS.map(d => records.filter(r=>r.jabatan===d && r.jenis===cat).length),
+        backgroundColor:['#003a70','#0ea5e9','#fbbf24'][i], borderRadius:4
+      }))
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
+      scales:{y:{beginAtZero:true}}}
+  });
+}
+
+/* ─ LAPORAN BULANAN ─ */
+let chartBulananInst;
+function renderBulanan() {
+  const year  = document.getElementById('lb-year').value;
+  const month = document.getElementById('lb-month').value;
+  const dept  = document.getElementById('lb-dept').value;
+  const data  = filteredRecords(dept, '', year, month);
+  const tbody = document.getElementById('bulanan-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('bulanan-empty').style.display = data.length ? 'none' : 'block';
+  data.forEach(r => {
+    tbody.innerHTML += `<tr>
+      <td>${r.tarikh}</td><td>${r.nama}</td>
+      <td><b>${r.jabatan}</b></td><td>${badgeHtml(r.jenis)}</td>
+      <td>${r.penganjur}</td><td>${r.peserta}</td>
+      <td style="max-width:160px;font-size:.75rem">${r.objektif}</td>
+      <td style="max-width:160px;font-size:.75rem">${r.impak||'—'}</td>
+    </tr>`;
+  });
+  const base  = year ? records.filter(r=>r.tarikh.startsWith(year)) : records;
+  const dBase = dept ? base.filter(r=>r.jabatan===dept) : base;
+  if (chartBulananInst) chartBulananInst.destroy();
+  chartBulananInst = new Chart(document.getElementById('chartBulanan'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS_MS,
+      datasets: CATS.map((cat,i)=>({
+        label: cat,
+        data: Array.from({length:12},(_,m)=>{
+          const mm = String(m+1).padStart(2,'0');
+          return dBase.filter(r=>r.jenis===cat && r.tarikh.slice(5,7)===mm).length;
+        }),
+        backgroundColor:['#003a70','#0ea5e9','#fbbf24'][i], borderRadius:4
+      }))
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}}}
+  });
+}
+
+/* ─ LAPORAN TAHUNAN ─ */
+let chartTahunanInst;
+function renderTahunan() {
+  const year = document.getElementById('lt-year').value;
+  const dept = document.getElementById('lt-dept').value;
+  const base = filteredRecords(dept, '', year, '');
+  const tbody = document.getElementById('tahunan-tbody');
+  tbody.innerHTML = '';
+  MONTHS_MS.forEach((m, i) => {
+    const mm   = String(i+1).padStart(2,'0');
+    const mRec = base.filter(r=>r.tarikh.slice(5,7)===mm);
+    const kur  = mRec.filter(r=>r.jenis==='Kurikulum').length;
+    const ins  = mRec.filter(r=>r.jenis==='Instruksional').length;
+    const pen  = mRec.filter(r=>r.jenis==='Penilaian').length;
+    const pes  = mRec.reduce((s,r)=>s+r.peserta, 0);
+    tbody.innerHTML += `<tr><td>${m}</td><td>${kur}</td><td>${ins}</td><td>${pen}</td><td><b>${mRec.length}</b></td><td>${pes}</td></tr>`;
+  });
+  if (chartTahunanInst) chartTahunanInst.destroy();
+  chartTahunanInst = new Chart(document.getElementById('chartTahunan'), {
+    type: 'line',
+    data: {
+      labels: MONTHS_MS,
+      datasets: [{
+        label: 'Jumlah Aktiviti',
+        data: Array.from({length:12},(_,i)=>{
+          const mm = String(i+1).padStart(2,'0');
+          return base.filter(r=>r.tarikh.slice(5,7)===mm).length;
+        }),
+        borderColor:'#003a70', backgroundColor:'rgba(0,58,112,.12)',
+        tension:.4, fill:true, pointRadius:5
+      }]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true}}}
+  });
+}
+
+/* ─ DATA UJIAN KEFAHAMAN OBE ─ */
+const UJIAN_DATA = [
+  [1,1,'AFZAN BINTI OMAR','JTMK','Belum Ujian'],
+  [2,2,'ANDING ANAK NYUAK','JTMK','Sudah Ujian'],
+  [3,3,'ANIZAWATI BINTI MUKHTAR','JTMK','Sudah Ujian'],
+  [4,4,'AZHAR BIN ABD HAMID','JTMK','Sudah Ujian'],
+  [5,5,'AZIZAH BINTI OHAMZAH','JTMK','Belum Ujian'],
+  [6,6,'CHEN MEI CHING','JTMK','Sudah Ujian'],
+  [7,7,'DZULKIPLI BIN MARASAN','JTMK','Sudah Ujian'],
+  [8,8,'FARRAH WAHEDA BINTI ABDULLAH','JTMK','Belum Ujian'],
+  [9,9,'HASBULLAH BIN ABDULLAH','JTMK','Belum Ujian'],
+  [10,10,'HERASUHANTI BINTI HERMAIN','JTMK','Belum Ujian'],
+  [11,11,'JOHARI AHMAD BIN GHAZALI','JTMK','Belum Ujian'],
+  [12,12,'MOHAMAD NIZAM BIN RAHADI','JTMK','Belum Ujian'],
+  [13,13,'NAZRINA BINTI BAKAR','JTMK','Belum Ujian'],
+  [14,14,'NG BOON DING','JTMK','Sudah Ujian'],
+  [15,15,'NORAIMI BINTI MAHRAN','JTMK','Belum Ujian'],
+  [16,16,'NORBAIZURA BINTI MOKHTAR','JTMK','Belum Ujian'],
+  [17,17,'NORFAZILAH BINTI MOHAMAD PON','JTMK','Sudah Ujian'],
+  [18,18,'NUR YAHZELINA BINTI HANAFI','JTMK','Belum Ujian'],
+  [19,19,'NUREDZAN BINTI ZALUDIN','JTMK','Belum Ujian'],
+  [20,20,'NURHAZURA BINTI HASSAN','JTMK','Sudah Ujian'],
+  [21,21,'RAZELI BIN SANI','JTMK','Belum Ujian'],
+  [22,22,'ROHAYA BINTI MOHAMAD','JTMK','Sudah Ujian'],
+  [23,23,'SABRINA BINTI MILAN','JTMK','Sudah Ujian'],
+  [24,24,'SAFINAH BINTI NAWAWI','JTMK','Belum Ujian'],
+  [25,25,'SANJAY CHARLES ALBERT','JTMK','Belum Ujian'],
+  [26,26,'SHARAFI BIN MOHAMED YUSOFF','JTMK','Belum Ujian'],
+  [27,27,'SITI FATIA BINTI MOHAMAD ALI','JTMK','Sudah Ujian'],
+  [28,28,'SITI NOOR AISHAH BINTI MOHAMMAD','JTMK','Belum Ujian'],
+  [29,29,'SURAFAH BINTI MOS','JTMK','Belum Ujian'],
+  [30,30,'SYAZWANI BINTI ABDUL KADIR','JTMK','Belum Ujian'],
+  [31,31,'TANG SI KING','JTMK','Belum Ujian'],
+  [32,32,'ZAKIR HUSSAIN BIN IBRAHIM','JTMK','Belum Ujian'],
+  [33,33,'ABU HARFIZ BIN HASSAN','JKM','Belum Ujian'],
+  [34,34,'ADIANI BINTI AB.RAHMAN','JKM','Belum Ujian'],
+  [35,35,'AHMAD FAIRUZ BIN MOHAMED','JKM','Belum Ujian'],
+  [36,36,'AHMAD NASIR BIN MOHAMED NOOR','JKM','Belum Ujian'],
+  [37,37,'AHMADY BIN SOLONG','JKM','Belum Ujian'],
+  [38,38,'AJMIR BIN MOHD SAILL','JKM','Belum Ujian'],
+  [39,39,'AL STANLEY ANAK NOHE','JKM','Belum Ujian'],
+  [40,40,'ALIFF BIN AB TAHIR','JKM','Sudah Ujian'],
+  [41,41,'ANDY ANAK BUJA','JKM','Belum Ujian'],
+  [42,42,'ASHRAF AZZAM BIN ZULKIFLI AMIN','JKM','Sudah Ujian'],
+  [43,43,'AZLAN BIN ADAM','JKM','Belum Ujian'],
+  [44,44,'AZRUL NIZAM BIN AZHAR','JKM','Belum Ujian'],
+  [45,45,'BLANGKAT AHMAD BASIMIN','JKM','Belum Ujian'],
+  [46,46,'BONG NEE MEL','JKM','Sudah Ujian'],
+  [47,47,'CHEN WONG KEONG','JKM','Belum Ujian'],
+  [48,48,'CHEW YUEH SENG','JKM','Belum Ujian'],
+  [49,49,'DASIMA BINTI NEN @ SHAHINAN','JKM','Belum Ujian'],
+  [50,50,'DINO SABASTIAN ANAK MAWANG','JKM','Belum Ujian'],
+  [51,51,'FADIL BIN AZIZ','JKM','Sudah Ujian'],
+  [52,52,'HAIZAL BIN MOHD HAMZAH','JKM','Sudah Ujian'],
+  [53,53,'JANE DANIELA ANAK MUGAN','JKM','Belum Ujian'],
+  [54,54,'JASLIN BIN RASIN','JKM','Belum Ujian'],
+  [55,55,'JASON WILLIAM VITALES','JKM','Belum Ujian'],
+  [56,56,'JULIUS ANAK APAT','JKM','Belum Ujian'],
+  [57,57,'LAILATUL HAMIDAH BINTI MD HAMDAN','JKM','Belum Ujian'],
+  [58,58,'LAU ONG YEE','JKM','Sudah Ujian'],
+  [59,59,'LILY SIONG @ LILY BINTI MAHMUD','JKM','Belum Ujian'],
+  [60,60,'LIYANA BINTI NORIZAN','JKM','Sudah Ujian'],
+  [61,61,'MAWARDI BIN MOHAMAD @ MAT JUNOH','JKM','Belum Ujian'],
+  [62,62,'MOHAMAD FAISAL DANIEL BIN ZAINI','JKM','Belum Ujian'],
+  [63,63,'MOHAMAD SHAHRIL BIN IBRAHIM','JKM','Belum Ujian'],
+  [64,64,'MOHD FATHI BIN RAMLI','JKM','Sudah Ujian'],
+  [65,65,'MOHD FITRI BIN SAFE\'I','JKM','Belum Ujian'],
+  [66,66,'MOHD ROSLI BIN SAAD','JKM','Belum Ujian'],
+  [67,67,'MOHD SARHAN BIN OTHMAN','JKM','Belum Ujian'],
+  [68,68,'MOHD SHAHRIZAN BIN KHAMIS','JKM','Belum Ujian'],
+  [69,69,'MOHD SHAZZANY BIN KERNI','JKM','Belum Ujian'],
+  [70,70,'MOHD. FAZRULLAH BIN ZAKARIA','JKM','Belum Ujian'],
+  [71,71,'MOHD.RIZAL BIN ABDUL RAMAN','JKM','Sudah Ujian'],
+  [72,72,'MUHAMMAD IQMAL QUSYAIRIE BIN MAZLAN','JKM','Belum Ujian'],
+  [73,73,'MUHAMMAD ZARIL BIN ZAINI','JKM','Sudah Ujian'],
+  [74,74,'NOOR SUHAIZLIN BINTI SAUTI','JKM','Sudah Ujian'],
+  [75,75,'NOR ZULIANA BINTI ABDUL LATIF','JKM','Belum Ujian'],
+  [76,76,'NUR ADIBA BINTI MOHD HASSAN','JKM','Sudah Ujian'],
+  [77,77,'ONG TZE CHING','JKM','Sudah Ujian'],
+  [78,78,'POLAND BIN JELIHI','JKM','Belum Ujian'],
+  [79,79,'REXCA ANAK JAMIT','JKM','Belum Ujian'],
+  [80,80,'RIDUWAN BIN ZAKARIA','JKM','Belum Ujian'],
+  [81,81,'SAIFUL IRWAN BIN SARKAWI','JKM','Belum Ujian'],
+  [82,82,'SAIFULDIN BIN ABDUL JALIL','JKM','Belum Ujian'],
+  [83,83,'SHARUDDIN BIN MOHD DAHURI','JKM','Belum Ujian'],
+  [84,84,'SITI AMELIA BINTI SHAIK PAWAN CHEE','JKM','Sudah Ujian'],
+  [85,85,'SUHAIMI BIN SAID','JKM','Belum Ujian'],
+  [86,86,'SUHANA BINTI MOHD GAZI','JKM','Belum Ujian'],
+  [87,87,'SUJANURIAH BINTI SAHIDI','JKM','Belum Ujian'],
+  [88,88,'SYARIZAL BIN BAKRI','JKM','Belum Ujian'],
+  [89,89,'THANDAYUTHAPANI A/L SEPERAMANIAM @ SUBRAMANIAM','JKM','Belum Ujian'],
+  [90,90,'WAN MUHAMMAD HANIF ASYRAF BIN WAN HASSAN','JKM','Belum Ujian'],
+  [91,91,'WEE CHIAU YEN','JKM','Sudah Ujian'],
+  [92,92,'WILSON ANAK INTAI','JKM','Belum Ujian'],
+  [93,93,'WU JIA HANG','JKM','Belum Ujian'],
+  [94,94,'YAP AI TIE','JKM','Belum Ujian'],
+  [95,95,'YAP TEK CHUAN','JKM','Belum Ujian'],
+  [96,96,'YUSMI BIN HALIT','JKM','Belum Ujian'],
+  [97,97,'ZAINAL ABIDDIN BIN AHMAD','JKM','Sudah Ujian'],
+  [98,98,'ZENTY RAZILANATY BINTI SAHARI','JKM','Belum Ujian'],
+  [99,99,'ZETY NORFARZILLA BINTI HOSMAN','JKM','Sudah Ujian'],
+  [100,100,'AFHAM ZULHUSMI BIN AHMAD','JKE','Sudah Ujian'],
+  [101,101,'AHMAD MUSLIM BIN ALI','JKE','Belum Ujian'],
+  [102,102,'ALFRED BIN A PIRIEN @ ALEXANDER PIRIN','JKE','Belum Ujian'],
+  [103,103,'ANIS MASTURA BINTI R AZMI','JKE','Sudah Ujian'],
+  [104,104,'AZLAN BIN MOHD ALI','JKE','Belum Ujian'],
+  [105,105,'AZRINA BINTI MADIHI','JKE','Belum Ujian'],
+  [106,106,'BEATHRICE MUNTAI ANAK KUMBONG','JKE','Belum Ujian'],
+  [107,107,'CASSANDRA CAROLINE SENDY','JKE','Sudah Ujian'],
+  [108,108,'CHE KU AHMAD FUAD BIN CHE KU ABDULLAH','JKE','Sudah Ujian'],
+  [109,109,'CHRISTOPHER SURESH MARTIN','JKE','Belum Ujian'],
+  [110,110,'FLORA ANAK ALBERT DAUD','JKE','Belum Ujian'],
+  [111,111,'HAMIDAH BINTI MOHAMMAD YUNUS','JKE','Belum Ujian'],
+  [112,112,'HANIZA BINTI POLLY','JKE','Sudah Ujian'],
+  [113,113,'HAZIQAH HANUN BINTI HAMSA','JKE','Belum Ujian'],
+  [114,114,'HELMI BIN ABD KADIR','JKE','Sudah Ujian'],
+  [115,115,'HISYARITA BINTI ABD WAHID','JKE','Belum Ujian'],
+  [116,116,'JOAN WANG YEE JUEN','JKE','Belum Ujian'],
+  [117,117,'JOSHUA ANAK RIBI','JKE','Belum Ujian'],
+  [118,118,'KHAIRUL AZAM BIN ELIAS @ MAYAH','JKE','Belum Ujian'],
+  [119,119,'LEDIA ANAK ANGUL','JKE','Belum Ujian'],
+  [120,120,'LEE KONG FAH','JKE','Belum Ujian'],
+  [121,121,'LIM CHE CHIEN','JKE','Belum Ujian'],
+  [122,122,'LUKMAN NUL HAKIM BIN MD TERASID','JKE','Sudah Ujian'],
+  [123,123,'MARDIANA BINTI MOHAMAD','JKE','Belum Ujian'],
+  [124,124,'MIMI MALISA BINTI DOLHAN','JKE','Belum Ujian'],
+  [125,125,'MOHAMED YUSUP BIN MOHAMAD YACKUB','JKE','Belum Ujian'],
+  [126,126,'MOHAMMAD PAUZI BIN MOKHTAR','JKE','Belum Ujian'],
+  [127,127,'MOHD HAZRY BIN ISMAIL','JKE','Belum Ujian'],
+  [128,128,'MOHD ZULFIKAR BIN NARANI','JKE','Belum Ujian'],
+  [129,129,'MUHAMMAD FAIZ BIN MOHD JAMAL','JKE','Sudah Ujian'],
+  [130,130,'MUHAMMAD HANIS BIN ALI','JKE','Belum Ujian'],
+  [131,131,'MUNIRAH BINTI GHAZALI','JKE','Belum Ujian'],
+  [132,132,'NOOR ASHEKIN BINTI CHE AMZAH @ HAMZAH','JKE','Belum Ujian'],
+  [133,133,'NORHAFIZAH BINTI MANAP','JKE','Belum Ujian'],
+  [134,134,'NORMAH BINTI JAINUDIN @ MOHAMAD','JKE','Belum Ujian'],
+  [135,135,'NORMIN ANAK MINCHONG','JKE','Belum Ujian'],
+  [136,136,'NORWARDATUN BINTI ABD RONI','JKE','Belum Ujian'],
+  [137,137,'NUR AZLINA BINTI HARIFFIN','JKE','Belum Ujian'],
+  [138,138,'NUR ZULZIKA BIN MOHAMMAD','JKE','Belum Ujian'],
+  [139,139,'NURATIKAH BINTI SEMAN','JKE','Belum Ujian'],
+  [140,140,'NURAZURA BINTI RALI','JKE','Sudah Ujian'],
+  [141,141,'OLIVIA WONG SIEW FONG','JKE','Belum Ujian'],
+  [142,142,'PANG SIOW JUEN','JKE','Belum Ujian'],
+  [143,143,'REDZUAN SAFRI BIN ABDUL RAHMAN','JKE','Belum Ujian'],
+  [144,144,'REMINJUS ANAK ANDING','JKE','Belum Ujian'],
+  [145,145,'SHAHRULNIZAM BIN BAHARI','JKE','Belum Ujian'],
+  [146,146,'SITI NUR FARIANIE BINTI ALI','JKE','Belum Ujian'],
+  [147,147,'SITI ROZANA BINTI ROMALI','JKE','Belum Ujian'],
+  [148,148,'SITI ZUBAIDAH BINTI JANUDIN','JKE','Belum Ujian'],
+  [149,149,'STUART OTTO ANAK WILSON MUNAN','JKE','Belum Ujian'],
+  [150,150,'SUFIAN BIN AHMAD','JKE','Belum Ujian'],
+  [151,151,'TANG HING KWONG','JKE','Belum Ujian'],
+  [152,152,'TIONG HUA SANG','JKE','Belum Ujian'],
+  [153,153,'WIDAD SYAMILA BINTI SAMSUDIN','JKE','Belum Ujian'],
+  [154,154,'ZAINAP BINTI HAJI LAMAT','JKE','Belum Ujian'],
+  [155,155,'ABANG SYAFIQNURAIN BIN ABANG SHOKERAN','JKA','Belum Ujian'],
+  [156,156,'ABDUL FATA BIN ABDUL TALIP','JKA','Sudah Ujian'],
+  [157,157,'AHMAD HASMUDIN BIN AHMAD AZZUDIN','JKA','Belum Ujian'],
+  [158,158,'AIDA NURAZALILLA BINTI ALI HASSAN','JKA','Sudah Ujian'],
+  [159,159,'AZARINA BINTI AZMAN','JKA','Sudah Ujian'],
+  [160,160,'AZYYATI BINTI BASROL','JKA','Belum Ujian'],
+  [161,161,'BONG SIAW WEE','JKA','Belum Ujian'],
+  [162,162,'CAROLINE ANN ANAK MAI','JKA','Sudah Ujian'],
+  [163,163,'DAYANG KHAYRUNSALIHATY BARIYYAH BINTI ABANG OTHMAN','JKA','Sudah Ujian'],
+  [164,164,'FARIZA BINTI MAHYAN','JKA','Belum Ujian'],
+  [165,165,'FRANCISCA ANAK KEVIN AKEU','JKA','Belum Ujian'],
+  [166,166,'HYRIL FARITHZ BIN AHMAD','JKA','Belum Ujian'],
+  [167,167,'JAM\'AAH BINTI SUUD','JKA','Sudah Ujian'],
+  [168,168,'JANE ANAK MOTAL','JKA','Sudah Ujian'],
+  [169,169,'JULIANA BINTI NAWAWI','JKA','Sudah Ujian'],
+  [170,170,'KHAIRUL HISHAM BIN SHAHARI','JKA','Belum Ujian'],
+  [171,171,'MIKE JOE ANAK JUING','JKA','Sudah Ujian'],
+  [172,172,'MOHD ASHADI BIN MOHD YUSOP','JKA','Belum Ujian'],
+  [173,173,'MOHD FAUZI BIN HASSAN','JKA','Belum Ujian'],
+  [174,174,'MOHD NAZRY BIN MOHAMMAD','JKA','Sudah Ujian'],
+  [175,175,'MOHD NOR FADLI BIN ABU KASSIM','JKA','Belum Ujian'],
+  [176,176,'MOHD RIZAL BIN ABDULLAH','JKA','Belum Ujian'],
+  [177,177,'MUAHMAAD ALIAS BIN OMAR ABDUL AZIZ','JKA','Belum Ujian'],
+  [178,178,'MUHAMMAD FUADDIL BIN NOR AHAD','JKA','Belum Ujian'],
+  [179,179,'MULIADI BIN WAHID','JKA','Belum Ujian'],
+  [180,180,'NADIATHUL RAIHANA BINTI ISMAIL','JKA','Sudah Ujian'],
+  [181,181,'NIZAR BIN AHMAD','JKA','Sudah Ujian'],
+  [182,182,'NOOR ADZIELLA BINTI MOHAMAD','JKA','Sudah Ujian'],
+  [183,183,'NOR HAIZAN BINTI JAMALI','JKA','Sudah Ujian'],
+  [184,184,'NORKIAH BINTI MAT ZAKI','JKA','Sudah Ujian'],
+  [185,185,'PETRUS JULINI ANAK GOEL','JKA','Belum Ujian'],
+  [186,186,'SYLVIA ONG AI LING','JKA','Sudah Ujian'],
+  [187,187,'WAN SITI AISYAH BINTI WAN IBRAHIM','JKA','Sudah Ujian'],
+  [188,188,'WONG SIE WOO','JKA','Belum Ujian'],
+  [189,189,'ZAINI BIN SULAIMAN','JKA','Belum Ujian'],
+  [190,190,'ABDULLAH BIN AHMAD','JKPK','Belum Ujian'],
+  [191,191,'ABDULLAH BIN ELON','JKPK','Belum Ujian'],
+  [192,192,'ALEXANDRIA ANAK GEORGE EMPAM','JKPK','Sudah Ujian'],
+  [193,193,'AZIS BIN SAPALI','JKPK','Belum Ujian'],
+  [194,194,'CHRISTOPHER JANTING LIEW CHALU','JKPK','Belum Ujian'],
+  [195,195,'DAISY ANAK AUGUSTINE PEDANG','JKPK','Sudah Ujian'],
+  [196,196,'DONALD ANAK JUAN','JKPK','Belum Ujian'],
+  [197,197,'HAFIZAH BINTI NAIHI','JKPK','Belum Ujian'],
+  [198,198,'HASRI BIN HAMDAN','JKPK','Sudah Ujian'],
+  [199,199,'HIDAYAH BINTI JULAIHI','JKPK','Belum Ujian'],
+  [200,200,'IVY OCTAVIA BINTI MICHAEL ARNI','JKPK','Belum Ujian'],
+  [201,201,'KHAIRULFADILAH BINTI MOHAMAD SAZALI','JKPK','Belum Ujian'],
+  [202,202,'KINTAN BINTI OTHMAN','JKPK','Belum Ujian'],
+  [203,203,'MASLINA BINTI BUANG','JKPK','Sudah Ujian'],
+  [204,204,'MUHAMMAD BILAL BIN MOKHTAR','JKPK','Belum Ujian'],
+  [205,205,'MUHAMMAD FAEZ BIN ABD RAHMAN','JKPK','Sudah Ujian'],
+  [206,206,'NOR HAKIMAH BINTI AHMAD SUBRI','JKPK','Belum Ujian'],
+  [207,207,'NUR LYDIA BINTI OTHMAN','JKPK','Sudah Ujian'],
+  [208,208,'NUR\'AIN FAMIEZA BINTI ROSDI','JKPK','Belum Ujian'],
+  [209,209,'NURWIRANI BINTI NILI','JKPK','Belum Ujian'],
+  [210,210,'RUHIL NAZNIN BINTI AZAMAN','JKPK','Sudah Ujian'],
+  [211,211,'SITI HAWA BINTI ISMAWI','JKPK','Belum Ujian'],
+  [212,212,'SITI KHADIJAH BINTI HAJON','JKPK','Belum Ujian'],
+  [213,213,'SUIT BIN BOJI','JKPK','Belum Ujian'],
+  [214,214,'SHALEEN NUR AIN BINTI SAMSUL','JKPK','Belum Ujian'],
+  [215,215,'ARFIEEN BIN MOKHTAR','JP','Belum Ujian'],
+  [216,216,'AZWA BINTI ABDUL HALIM','JP','Sudah Ujian'],
+  [217,217,'BAIZURA BINTI TIAI','JP','Sudah Ujian'],
+  [218,218,'DIDI REENA BINTI MATZEN','JP','Belum Ujian'],
+  [219,219,'EMY MARINA BINTI HASSAN','JP','Belum Ujian'],
+  [220,220,'ERMIZAM BIN EDNI','JP','Belum Ujian'],
+  [221,221,'FARIDAH BINTI CHE IN','JP','Sudah Ujian'],
+  [222,222,'FLORENCE FLETCHER','JP','Sudah Ujian'],
+  [223,223,'HAIRULHANA BINTI ZAWAWI','JP','Belum Ujian'],
+  [224,224,'HARTYNI BINTI MASTOR','JP','Sudah Ujian'],
+  [225,225,'HAZRAN BIN OTHMAN','JP','Belum Ujian'],
+  [226,226,'HELEN UNYAN ANAK EMBUL','JP','Belum Ujian'],
+  [227,227,'IZZAH ATIRAH BINTI ABU BAKAR','JP','Sudah Ujian'],
+  [228,228,'JACQUELYNE EKOT','JP','Belum Ujian'],
+  [229,229,'JECKIE JEPAT CHANG','JP','Belum Ujian'],
+  [230,230,'KASWADI BIN ALI','JP','Belum Ujian'],
+  [231,231,'KHATIJAH BINTI IBRAHIM','JP','Sudah Ujian'],
+  [232,232,'LEWIS LIEW TEO PIAW','JP','Belum Ujian'],
+  [233,233,'LIU YEW CHUI','JP','Belum Ujian'],
+  [234,234,'MOBIL BIN SAHRAN','JP','Belum Ujian'],
+  [235,235,'MUSLEHAH BINTI SAINI','JP','Belum Ujian'],
+  [236,236,'NOOR DASREENA SHUKRIA BINTI ABDUL SHUKUR','JP','Belum Ujian'],
+  [237,237,'NOORHAFIZAH BINTI AKUP','JP','Belum Ujian'],
+  [238,238,'NOORHASMAH BINTI YAHYA','JP','Sudah Ujian'],
+  [239,239,'NORIANI BINTI SAMBRI','JP','Belum Ujian'],
+  [240,240,'NUR AZREEN BINTI ZAIDEL','JP','Belum Ujian'],
+  [241,241,'NUR IZZA NATASHA BINTI TAJUDIN','JP','Belum Ujian'],
+  [242,242,'NURFAZLYN BINTI DOLHAN','JP','Sudah Ujian'],
+  [243,243,'NURUL ANIQAH BINTI AHMAD ZAIDI','JP','Belum Ujian'],
+  [244,244,'NURUL AZWEIN BINTI MOHAMAD JULAIHI','JP','Belum Ujian'],
+  [245,245,'PATRICK JOPRIS ARO','JP','Belum Ujian'],
+  [246,246,'ROSLAND BUJA','JP','Belum Ujian'],
+  [247,247,'SHANTY ANAK EMERSON GERIJIH','JP','Belum Ujian'],
+  [248,248,'SHARIFAH MAHANI BINTI SYID ASSIMIE','JP','Belum Ujian'],
+  [249,249,'SITI HUSOOSANI BINTI HUSAIN','JP','Sudah Ujian'],
+  [250,250,'SITI ZALEHA BINTI IDRIS','JP','Belum Ujian'],
+  [251,251,'SUHANA BINTI MATLIN','JP','Belum Ujian'],
+  [252,252,'SYLVIA MARIA AK SENAP','JP','Belum Ujian'],
+  [253,253,'ZAIDI BIN BASLI','JP','Belum Ujian'],
+  [254,254,'ZAINAH BINTI SEMAN','JP','Belum Ujian'],
+  [255,255,'ZUNITA BINTI BUJANG','JP','Belum Ujian'],
+  [256,256,'ABDUL YAZID BIN IBRAHIM','JMSK','Belum Ujian'],
+  [257,257,'AZLINA BINTI MORSHIDI','JMSK','Sudah Ujian'],
+  [258,258,'CHANG SHEUE NEE','JMSK','Belum Ujian'],
+  [259,259,'CHARLES MULING ANAK LIBAU','JMSK','Belum Ujian'],
+  [260,260,'EMILY JARA THOMAS','JMSK','Belum Ujian'],
+  [261,261,'FARAH BINTI ABDUL MALEK','JMSK','Belum Ujian'],
+  [262,262,'HALIMAH BINTI ROBERT','JMSK','Belum Ujian'],
+  [263,263,'JEFFERY ABAT ANAK MARAMAT','JMSK','Belum Ujian'],
+  [264,264,'KHAIRUNISSA BINTI MOSTAFA','JMSK','Belum Ujian'],
+  [265,265,'KHALID HUSSEINE BIN TUAH','JMSK','Belum Ujian'],
+  [266,266,'LENNY KOLINA BINTI MAJALIS','JMSK','Belum Ujian'],
+  [267,267,'LING YING LEH','JMSK','Belum Ujian'],
+  [268,268,'LIU TSE HUI','JMSK','Sudah Ujian'],
+  [269,269,'LIYANA BINTI MURNI','JMSK','Belum Ujian'],
+  [270,270,'LIYANA BINTI ROSLI','JMSK','Belum Ujian'],
+  [271,271,'MADYA MASTIKA BINTI AHMAD','JMSK','Belum Ujian'],
+  [272,272,'MAIZATUL AQMAM BINTI OTHMAN','JMSK','Belum Ujian'],
+  [273,273,'MATIEU BIN AH KIM','JMSK','Belum Ujian'],
+  [274,274,'NIK SYAHRUL FAIZAL BIN NIK MAT','JMSK','Belum Ujian'],
+  [275,275,'NOORHAFIZ BIN KANAFI','JMSK','Belum Ujian'],
+  [276,276,'NOR AZREEN BINTI AYUB','JMSK','Sudah Ujian'],
+  [277,277,'NOR SYAHIDAL ARSHAINI BINTI SHAMSUDIN','JMSK','Sudah Ujian'],
+  [278,278,'NORHIDAYAH BINTI JAMALUDIN','JMSK','Belum Ujian'],
+  [279,279,'NURUL HAYATI BINTI JAMIL','JMSK','Belum Ujian'],
+  [280,280,'NURUL LIYANA BINTI MAHMOD','JMSK','Sudah Ujian'],
+  [281,281,'ROHAIDA BINTI ABU BAKAR','JMSK','Belum Ujian'],
+  [282,282,'SHAH NAZIM BIN SHAHAR','JMSK','Belum Ujian'],
+  [283,283,'SITI AISYAH BINTI ISMAWI','JMSK','Belum Ujian'],
+  [284,284,'TERESA SUSILA ANAK JAMES','JMSK','Sudah Ujian'],
+  [285,285,'TERMIMI HIDAYAT BIN MAHYAN','JMSK','Belum Ujian'],
+  [286,286,'ZURAINA BINTI ISMAIL','JMSK','Sudah Ujian'],
+  [287,287,'AEIDA NURHAFIDZAH BINTI ZAHILI','JPA','Sudah Ujian'],
+  [288,288,'AGNES ANAK BUDA','JPA','Belum Ujian'],
+  [289,289,'ALFRED VALENTINE BAKRIN','JPA','Belum Ujian'],
+  [290,290,'ANDY ANAK DAN','JPA','Belum Ujian'],
+  [291,291,'ANDY BIN HAMAN','JPA','Belum Ujian'],
+  [292,292,'ANN ANAK REPORT','JPA','Belum Ujian'],
+  [293,293,'AZARI BIN MASILI','JPA','Belum Ujian'],
+  [294,294,'BIBIE ANAK NEO','JPA','Belum Ujian'],
+  [295,295,'DEFENI ANAK JAROP','JPA','Belum Ujian'],
+  [296,296,'DUKE ANAK MICHAEL DANGAT','JPA','Belum Ujian'],
+  [297,297,'ELSIE ANAK ATAU','JPA','Belum Ujian'],
+  [298,298,'EUDARY ANAK ROLAND DUJU','JPA','Belum Ujian'],
+  [299,299,'FADHLINA BINTI MOHAMAD AHMAD','JPA','Sudah Ujian'],
+  [300,300,'FATIN FAQERIAH BINTI HAMSAH','JPA','Sudah Ujian'],
+  [301,301,'FATIN IZATI BINTI MOHD TAHER','JPA','Sudah Ujian'],
+  [302,302,'HASLINDA BINTI JAMA\'IN','JPA','Sudah Ujian'],
+  [303,303,'IZZUL FARHAN BIN ISMAIL','JPA','Belum Ujian'],
+  [304,304,'JOSEPH SELVAM NEELAGANDAN','JPA','Belum Ujian'],
+  [305,305,'MARCUS KHO GEE WHAI','JPA','Belum Ujian'],
+  [306,306,'MORNITA ANAK DERI','JPA','Belum Ujian'],
+  [307,307,'NATRAH BINTI MAT NOOR','JPA','Sudah Ujian'],
+  [308,308,'NGUI HWA HUNG','JPA','Sudah Ujian'],
+  [309,309,'NOR SYAHIDZAN BINTI MOHAMMAD RIDZUAN','JPA','Belum Ujian'],
+  [310,310,'NUR MAISARA SYAHIRAH BINTI ZAINAL ABIDIN','JPA','Sudah Ujian'],
+  [311,311,'NURIZAN BINTI SAURY','JPA','Belum Ujian'],
+  [312,312,'NURSHAKHUZAIMAH BINTI SAHMAT','JPA','Belum Ujian'],
+  [313,313,'NUZAIMAH BINTI MUDA','JPA','Belum Ujian'],
+  [314,314,'PHYLLISCIA ANAK TOMAN','JPA','Belum Ujian'],
+  [315,315,'SHARIFAH KHUZAIMAH BINTI WAN YUSUP','JPA','Sudah Ujian'],
+  [316,316,'SITI ZURIAH BINTI OSMAN','JPA','Belum Ujian'],
+  [317,317,'SUHARYATI BINTI SULAIMAN','JPA','Belum Ujian'],
+  [318,318,'SURYA ADLIZA BINTI ABDUL KADIR','JPA','Belum Ujian'],
+  [319,319,'WAN FAISAL BIN WAN AHMAD MOHTASA','JPA','Sudah Ujian'],
+  [320,320,'ZAINAB BINTI MOHAMAD AHMAD','JPA','Belum Ujian'],
+];
+
+/* ─ GOOGLE SHEETS INTEGRATION – UJIAN KEFAHAMAN OBE ─ */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc11aJngCfZaxicllehTsK31FtXlrzeA8PLRsiz2llkn3_p-LU-OOJrxPxuizhpys/exec';
+const LULUS_THRESHOLD = 85; // markah % lulus
+
+// Markah ujian lama 2025 (data statik dari Excel)
+// { 'NAMA HURUF BESAR': markah }
+const MARKAH_LAMA_2025 = {
+  'NEELAM AMELIA BINTI MOHAMAD REJENI': 100,
+  'NOR HAIZAN BINTI JAMALI': 96,
+  'NOOR ADZIELLA BINTI MOHAMAD': 96,
+  'ANIZAWATI BINTI MUKHTAR': 100,
+  'SITI SUNAIDAH SUKMA BINTI SUBRI': 100,
+  'ANDING ANAK NYUAK': 96,
+  'ABDUL FATA BIN ABDUL TALIP': 100,
+  'NABIHAH BINTI SIHAR': 100,
+  'ZETY NORFARZILLA BINTI HOSMAN': 100,
+  'NOORHASMAH BINTI YAHYA': 96,
+  'NOOR AFIDA': 100,
+  'HAIZAL BIN MOHD HAMZAH': 100,
+  'ROHAYA BINTI MOHAMAD': 100,
+  'AZWA BINTI ABDUL HALIM': 100,
+  'CHONG CHIEW CHING': 100,
+  'NORFAZILAH BINTI MOHAMAD PON': 100,
+  'MUNIRAH BT DAWI SAIFUDDIN': 100,
+  'BAIZURA BINTI TIAI': 100,
+  'NGUI HWA HUNG': 100,
+  'AZARINA BINTI AZMAN': 96,
+  'MUHAMMAD ZAKWAN BIN ZAINE': 100,
+  'MASLINA BINTI BUANG': 100,
+  'LUKMAN NUL HAKIM BIN MD TERASID': 96,
+  'SABRINA BINTI MILAN': 96,
+  'WEE CHIAU YEN': 100,
+  'NOOR SUHAIZLIN BINTI SAUTI': 100,
+  'NURHAZURA BINTI HASSAN': 100,
+  'NORWARDATUN BINTI ABD RONI': 84,
+  'DZULKIPLI BIN MARASAN': 100,
+  'NUR MAISARA SYAHIRAH BINTI ZAINAL ABIDIN': 96,
+  'MOHD.RIZAL BIN ABDUL RAMAN': 96,
+  'TERESA SUSILA ANAK JAMES': 100,
+  'LIU TSE HUI': 100,
+  'NOR AZREEN BINTI AYUB': 100,
+  'SITI HUSOOSANI BINTI HUSAIN': 100,
+  'NUR ADIBA BINTI MOHD HASSAN': 96,
+  'HANIZA BINTI POLLY': 100,
+  'SITI NURUL HAZWANI': 100,
+  'SITI NURFAIZAH BT ABU': 100,
+  'NUREDZAN BINTI ZALUDIN': 80,
+  'MARLIA BINTI MARZUKI': 100,
+  'MUHAMMAD IQMAL QUSYAIRIE BIN MAZLAN': 84,
+  'MUHAMMAD ZARIL BIN ZAINI': 100,
+  'KHATIJAH BINTI IBRAHIM': 100,
+  'CASSANDRA CAROLINE SENDY': 88,
+  'ZAHRATUN SAKINAH BINTI JAMALUDDIN': 100,
+  'JAM\'AAH BINTI SUUD': 100,
+  'DAISY ANAK AUGUSTINE PEDANG': 100,
+  'HASLINDA BINTI JAMA\'IN': 100,
+  'FARIDAH BT CHE IN': 92,
+  'SITI FATIA BINTI MOHAMAD ALI': 96,
+  'KEDUNG FLETCHER': 96,
+  'SITI NORHANA BINTI SELAMAT': 96,
+  'NURFAZLYN BINTI DOLHAN': 100,
+  'IZZAH ATIRAH BINTI ABU BAKAR': 100,
+  'ZAINAL ABIDDIN BIN AHMAD': 96,
+  'FADIL BIN AZIZ': 100,
+  'NUZUL ARDZAN BIN MOKHTAR': 100,
+  'SHAHARONI BINTI SHAFIE': 96,
+  'SITI AMELIA BINTI SHAIK PAWAN CHEE': 100,
+  'NURAZURA BINTI RALI': 100,
+  'MUHAMMAD FAIZ BIN MOHD JAMAL': 100,
+  'FADHLINA BINTI MOHAMAD AHMAD': 100,
+  'RUHIL NAZNIN BINTI AZAMAN': 100,
+  'ASHRAF AZZAM BIN ZULKIFLI AMIN': 100,
+  'NATRAH BINTI MAT NOOR': 100,
+  'MOHD ROSLI BIN MAT ISA': 96,
+  'FLORENCE FLETCHER': 100,
+  'MIKE JOE ANAK JUING': 88,
+  'WAN FAISAL BIN WAN AHMAD MOHTASA': 76,
+  'NOR SYAHIDAL ARSHAINI BINTI SHAMSUDIN': 100,
+  'ANIS MASTURA BINTI R AZMI': 96,
+  'AZHAR BIN ABD HAMID': 100,
+  'JANE ANAK MOTAL': 96,
+  'DAYANG KHAYRUNSALIHATY BARIYYAH BINTI ABANG OTHMAN': 100,
+  'ALEXANDRIA ANAK GEORGE EMPAM': 100,
+  'ONG TZE CHING': 96,
+  'LIYANA BINTI NORIZAN': 100,
+  'LAU ONG YEE': 100,
+  'HASRI BIN HAMDAN': 100,
+  'WAN SITI AISYAH BINTI WAN IBRAHIM': 96,
+  'NORKIAH BINTI MAT ZAKI': 100,
+  'FATIN IZATI BINTI MOHD TAHER': 100,
+  'AEIDA NURHAFIDZAH BINTI ZAHILI': 96,
+  'SHARIFAH KHUZAIMAH BINTI WAN YUSUP': 92,
+  'JULIANA BINTI NAWAWI': 100,
+  'NIZAR BIN AHMAD': 100,
+  'FAIDATUL AKMA BINTI CHE KAMARUDIN': 100,
+  'NG BOON DING': 100,
+  'FATIN FAQERIAH BINTI HAMSAH': 100,
+  'CHEN MEI CHING': 100,
+  'ALIFF BIN AB TAHIR': 92,
+  'HARTYNI BINTI MASTOR': 96,
+  'AIDA NURAZALILLA BINTI ALI HASSAN': 96,
+  'NADIATHUL RAIHANA BINTI ISMAIL': 100,
+  'MUHAMMAD AZRI IZANI BIN MOHAMAD HALIM': 100,
+  'MOHD FATHI BIN RAMLI': 100,
+  'AFHAM ZULHUSMI BIN AHMAD': 92,
+  'NURUL LIYANA BINTI MAHMOD': 96,
+  'AZLINA BINTI MORSHIDI': 100,
+  'MUHAMAD NAZRI ABU SHAH': 92,
+  'CAROLINE ANN ANAK MAI': 100,
+  'BONG NEE MEL': 100,
+  'HELMI BIN ABD KADIR': 92,
+  'MOHD NAZRY BIN MOHAMMAD': 100,
+  'ZURAINA BINTI ISMAIL': 100,
+  'CHE KU AHMAD FUAD BIN CHE KU ABDULLAH': 100,
+  'NUR LYDIA BINTI OTHMAN': 100,
+  'MOHAMAD FIKHRI BIN NOR AZMAN': 100,
+  'SYLVIA ONG AI LING': 100,
+  'MUHAMMAD FAEZ BIN ABD RAHMAN': 96,
+};
+
+// Helper: dapatkan markah lama 2025 untuk seseorang (fuzzy match nama)
+function getMarkahLama2025(nama) {
+  const key = nama.trim().toUpperCase();
+  if (MARKAH_LAMA_2025[key] !== undefined) return MARKAH_LAMA_2025[key];
+  // Cuba partial match — nama dalam UJIAN_DATA kadang berbeza sedikit
+  for (const k of Object.keys(MARKAH_LAMA_2025)) {
+    if (k.includes(key) || key.includes(k)) return MARKAH_LAMA_2025[k];
+  }
+  return 0;
+}
+
+// Cache data dari Google Sheets
+let sheetsUjianData = {}; // { 'NAMA PENSYARAH': { markah: 92, statusLulus: 'Lulus', timestamp: '...' } }
+let sheetsFetchStatus = 'idle'; // idle | loading | done | error
+
+async function fetchUjianFromSheets() {
+  sheetsFetchStatus = 'loading';
+  _updateFetchStatusUI();
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL);
+    const rows = await res.json();
+    sheetsUjianData = {};
+    rows.forEach(row => {
+      const nama    = (row['Nama Penuh (Huruf besar contoh : ALI BIN ABU)'] || '').trim().toUpperCase();
+      const jabatan = (row['Jabatan'] || '').trim().toUpperCase();
+      const scoreRaw = row['Score'] !== undefined ? String(row['Score']).trim() : '';
+      let markah = 0;
+      if (scoreRaw.includes('/')) {
+        const parts = scoreRaw.split('/');
+        const dapat = parseFloat(parts[0]);
+        const jumlah = parseFloat(parts[1]);
+        if (!isNaN(dapat) && !isNaN(jumlah) && jumlah > 0) {
+          markah = Math.round((dapat / jumlah) * 100);
+        }
+      } else if (scoreRaw !== '') {
+        markah = parseFloat(scoreRaw) || 0;
+      }
+      if (nama) {
+        // Simpan entri terbaru jika ada lebih dari satu jawapan
+        if (!sheetsUjianData[nama] || markah > sheetsUjianData[nama].markah) {
+          sheetsUjianData[nama] = {
+            markah,
+            jabatan,
+            statusLulus: markah >= LULUS_THRESHOLD ? 'Lulus' : 'Perlu Peningkatan',
+            timestamp: row['Timestamp'] || ''
+          };
+        }
+      }
+    });
+    sheetsFetchStatus = 'done';
+  } catch (e) {
+    console.warn('Gagal fetch data ujian dari Google Sheets:', e);
+    sheetsFetchStatus = 'error';
+  }
+  _updateFetchStatusUI();
+  updateUjianKPI();
+  renderUjianTable();
+}
+
+function _updateFetchStatusUI() {
+  const el = document.getElementById('ujian-fetch-status');
+  if (!el) return;
+  if (sheetsFetchStatus === 'loading') {
+    el.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;"></i> Memuat data terkini...';
+    el.style.color = '#6c757d';
+  } else if (sheetsFetchStatus === 'done') {
+    const count = Object.keys(sheetsUjianData).length;
+    el.innerHTML = `<i class="bi bi-cloud-check-fill" style="color:#198754;"></i> ${count} jawapan dimuatkan · <span style="color:#9ca3af;">dikemaskini ${new Date().toLocaleTimeString('ms-MY')}</span>`;
+    el.style.color = '#374151';
+  } else if (sheetsFetchStatus === 'error') {
+    el.innerHTML = '<i class="bi bi-wifi-off" style="color:#dc3545;"></i> Gagal sambung ke Google Sheets — papar data tempatan';
+    el.style.color = '#dc3545';
+  }
+}
+
+// Auto-refresh setiap 5 minit
+let _ujianRefreshTimer = null;
+function startUjianAutoRefresh() {
+  if (_ujianRefreshTimer) clearInterval(_ujianRefreshTimer);
+  fetchUjianFromSheets();
+  _ujianRefreshTimer = setInterval(fetchUjianFromSheets, 5 * 60 * 1000);
+}
+
+/* ─ BADGE DOWNLOAD ─ */
+function _logoDataUrl() {
+  // Cuba dapatkan logo dari img tag yang dah diload
+  const img = document.getElementById('logo-img');
+  if (img && img.complete && img.naturalWidth > 0) {
+    try {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      return c.toDataURL('image/png');
+    } catch(e) {}
+  }
+  return null;
+}
+
+function generateBadgeCanvas(nama, jabatan, markah, tarikhRaw) {
+  // Saiz A5 landscape @ 150dpi — 1123 x 794 px
+  const W = 1123, H = 794;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const NAVY  = '#003a70';
+  const GOLD  = '#ffd700';
+  const WHITE = '#ffffff';
+  const LIGHT = '#f4f6fb';
+
+  // ── Background
+  ctx.fillStyle = LIGHT;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Header bar (navy)
+  ctx.fillStyle = NAVY;
+  ctx.fillRect(0, 0, W, 130);
+
+  // ── Logo bulat di header
+  const logoUrl = _logoDataUrl();
+  const logoX = 36, logoY = 15, logoR = 50;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(logoX + logoR, logoY + logoR, logoR, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+  if (logoUrl) {
+    const logoImg = new Image();
+    logoImg.src = logoUrl;
+    ctx.drawImage(logoImg, logoX, logoY, logoR * 2, logoR * 2);
+  } else {
+    ctx.fillStyle = GOLD;
+    ctx.fill();
+    ctx.fillStyle = NAVY;
+    ctx.font = 'bold 22px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('PKS', logoX + logoR, logoY + logoR + 8);
+  }
+  ctx.restore();
+
+  // ── Teks header
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 15px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('POLITEKNIK KUCHING SARAWAK', 150, 52);
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = '13px "Segoe UI", sans-serif';
+  ctx.fillText('Sistem Laporan OBE (SiLOBE) – Outcomes Based Education', 150, 74);
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 13px "Segoe UI", sans-serif';
+  ctx.fillText('SIJIL KEFAHAMAN OUTCOME-BASED EDUCATION', 150, 100);
+
+  // ── Trofi ikon (unicode)
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 48px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏆', W / 2, 215);
+
+  // ── Tajuk sijil
+  ctx.fillStyle = NAVY;
+  ctx.font = 'bold 22px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SIJIL KEFAHAMAN', W / 2, 270);
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 20px "Segoe UI", sans-serif';
+  ctx.fillText('OUTCOME-BASED EDUCATION', W / 2, 298);
+
+  // ── Garis emas dekoratif
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W/2 - 200, 315); ctx.lineTo(W/2 + 200, 315); ctx.stroke();
+
+  // ── Teks "Ini mengesahkan bahawa"
+  ctx.fillStyle = '#374151';
+  ctx.font = '15px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Ini mengesahkan bahawa', W / 2, 352);
+
+  // ── Nama pensyarah (besar, navy)
+  ctx.fillStyle = NAVY;
+  ctx.font = 'bold 32px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  // Potong nama kalau terlalu panjang
+  let namaDisplay = nama;
+  while (ctx.measureText('✦  ' + namaDisplay + '  ✦').width > W - 80 && namaDisplay.length > 10) {
+    namaDisplay = namaDisplay.slice(0, -1);
+  }
+  ctx.fillText('✦  ' + namaDisplay + '  ✦', W / 2, 400);
+
+  // ── Teks lulus
+  ctx.fillStyle = '#374151';
+  ctx.font = '15px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('telah LULUS Ujian Kefahaman OBE Politeknik Kuching Sarawak', W / 2, 438);
+
+  // ── Garis emas bawah nama
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2 - 200, 452); ctx.lineTo(W/2 + 200, 452); ctx.stroke();
+
+  // ── Info grid (Jabatan, Markah, Tarikh)
+  // Data lama (statik, tiada timestamp) → 11/11/2025; Data baru dari Sheets → tarikh sebenar
+  const tarikhDisplay = tarikhRaw
+    ? (() => {
+        const d = new Date(tarikhRaw);
+        return isNaN(d) ? tarikhRaw : d.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      })()
+    : '11/11/2025';
+  const isLulus = markah >= LULUS_THRESHOLD || (markah === 0 && tarikhRaw === '');
+  const markahDisplay = markah > 0
+    ? (markah >= LULUS_THRESHOLD ? markah + '% (Lulus)' : markah + '%')
+    : 'Lulus';
+
+  ctx.textAlign = 'center';
+  const cols = [
+    { label: 'Jabatan', val: jabatan || '—' },
+    { label: 'Markah',  val: markahDisplay    },
+    { label: 'Tarikh',  val: tarikhDisplay    },
+  ];
+  const colW = 220, startX = W / 2 - colW;
+  cols.forEach((col, i) => {
+    const cx = startX + i * colW;
+    ctx.fillStyle = '#6c757d';
+    ctx.font = '11px "Segoe UI", sans-serif';
+    ctx.fillText(col.label.toUpperCase(), cx, 492);
+    ctx.fillStyle = NAVY;
+    ctx.font = 'bold 15px "Segoe UI", sans-serif';
+    ctx.fillText(col.val, cx, 514);
+  });
+
+  // ── Digital verification box
+  const boxX = W/2 - 240, boxY = 548, boxW = 480, boxH = 76;
+  ctx.fillStyle = WHITE;
+  ctx.strokeStyle = NAVY;
+  ctx.lineWidth = 1.5;
+  _roundRect(ctx, boxX, boxY, boxW, boxH, 8);
+  ctx.fill(); ctx.stroke();
+
+  // Garis sisi kiri hijau
+  ctx.fillStyle = '#198754';
+  _roundRect(ctx, boxX, boxY, 6, boxH, [8, 0, 0, 8]);
+  ctx.fill();
+
+  ctx.fillStyle = '#198754';
+  ctx.font = 'bold 13px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('✅  Disahkan Secara Digital', boxX + 20, boxY + 26);
+  ctx.fillStyle = '#374151';
+  ctx.font = '12px "Segoe UI", sans-serif';
+  ctx.fillText('Sistem SiLOBE – Politeknik Kuching Sarawak', boxX + 20, boxY + 46);
+
+  // Auto-generate ID: OBE-TAHUN-JABATAN-NO
+  const tahun = new Date().getFullYear();
+  const jab4  = (jabatan || 'PKS').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 4);
+  const uid   = Math.floor(1000 + Math.random() * 9000);
+  const badgeId = `OBE-${tahun}-${jab4}-${uid}`;
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '11px "Segoe UI", sans-serif';
+  ctx.fillText('ID: ' + badgeId, boxX + 20, boxY + 63);
+
+  // ── Footer
+  ctx.fillStyle = NAVY;
+  ctx.fillRect(0, H - 36, W, 36);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '11px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Politeknik Kuching Sarawak  ·  Sistem Laporan OBE (SiLOBE)  ·  siLOBE.pks.edu.my', W / 2, H - 13);
+
+  // ── Border luar
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(3, 3, W - 6, H - 6);
+  ctx.strokeStyle = NAVY;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+
+  return canvas;
+}
+
+function _roundRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'number') r = [r, r, r, r];
+  const [tl, tr, br, bl] = r;
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y); ctx.arcTo(x + w, y, x + w, y + tr, tr);
+  ctx.lineTo(x + w, y + h - br); ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+  ctx.lineTo(x + bl, y + h); ctx.arcTo(x, y + h, x, y + h - bl, bl);
+  ctx.lineTo(x, y + tl); ctx.arcTo(x, y, x + tl, y, tl);
+  ctx.closePath();
+}
+
+function downloadBadge(nama, jabatan, markah, tarikhRaw) {
+  const canvas = generateBadgeCanvas(nama, jabatan, markah, tarikhRaw);
+  const link = document.createElement('a');
+  const safeName = nama.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
+  link.download = `Badge_OBE_${safeName}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function downloadBadgeZip(jabatan) {
+  const zip = new JSZip();
+  const folder = zip.folder('Badge_OBE_' + (jabatan || 'Semua'));
+
+  // Kumpul semua pensyarah lulus dalam jabatan
+  const lulusList = UJIAN_DATA.filter(r => {
+    const jab = !jabatan || r[3] === jabatan;
+    const status = getUjianStatus(r);
+    const lulusData = getUjianLulus(r);
+    const isLulus = lulusData
+      ? lulusData.statusLulus === 'Lulus'
+      : status === 'Sudah Ujian';
+    return jab && isLulus;
+  });
+
+  if (lulusList.length === 0) {
+    alert('Tiada pensyarah lulus dalam jabatan ' + (jabatan || 'ini') + '.');
+    return;
+  }
+
+  // Tunjuk progress
+  const btn = document.getElementById('zip-btn-' + (jabatan || 'all'));
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;"></i> Menjana badge...';
+
+  for (const r of lulusList) {
+    const lulusData = getUjianLulus(r);
+    const safeName = r[2].replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
+    const isStatikLulus = getUjianStatus(r) === 'Sudah Ujian';
+    const isSheetLulus  = lulusData && lulusData.statusLulus === 'Lulus';
+
+    if (isStatikLulus && isSheetLulus) {
+      // Jana 2 badge — satu lama (2025 + markah sebenar), satu baru (Sheets)
+      const canvas2025 = generateBadgeCanvas(r[2], r[3], getMarkahLama2025(r[2]), '');
+      folder.file(`Badge_OBE_${safeName}_2025.png`, canvas2025.toDataURL('image/png').split(',')[1], { base64: true });
+      await new Promise(res => setTimeout(res, 10));
+      const canvas2026 = generateBadgeCanvas(r[2], r[3], lulusData.markah, lulusData.timestamp);
+      folder.file(`Badge_OBE_${safeName}_2026.png`, canvas2026.toDataURL('image/png').split(',')[1], { base64: true });
+    } else {
+      const markah = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
+      const tarikh = lulusData ? lulusData.timestamp : '';
+      const canvas = generateBadgeCanvas(r[2], r[3], markah, tarikh);
+      folder.file(`Badge_OBE_${safeName}.png`, canvas.toDataURL('image/png').split(',')[1], { base64: true });
+    }
+    // Bagi browser bernafas
+    await new Promise(res => setTimeout(res, 10));
+  }
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const link = document.createElement('a');
+  link.download = `Badge_OBE_${jabatan || 'Semua'}_${new Date().getFullYear()}.zip`;
+  link.href = URL.createObjectURL(content);
+  link.click();
+  URL.revokeObjectURL(link.href);
+
+  if (btn) btn.innerHTML = origText;
+}
+
+/* ─ UJIAN OVERRIDE (localStorage) ─ */
+let ujianOverride = JSON.parse(localStorage.getItem('obe_ujian_override') || '{}');
+
+function saveUjianOverride() {
+  localStorage.setItem('obe_ujian_override', JSON.stringify(ujianOverride));
+}
+
+// Dapatkan status ujian — Sheets data > override > UJIAN_DATA asal
+function getUjianStatus(r) {
+  const namaUpper = r[2].toUpperCase();
+  if (sheetsUjianData[namaUpper]) return 'Sudah Ujian';
+  if (ujianOverride.hasOwnProperty(r[1])) return ujianOverride[r[1]];
+  return r[4];
+}
+
+// Dapatkan data lulus dari Sheets
+function getUjianLulus(r) {
+  const namaUpper = r[2].toUpperCase();
+  return sheetsUjianData[namaUpper] || null;
+}
+
+function toggleUjianStatus(noAsal) {
+  if (!currentUser || currentUser.role !== 'Admin') return;
+  const rec = UJIAN_DATA.find(r => r[1] === noAsal);
+  if (!rec) return;
+  const current = getUjianStatus(rec);
+  const newStatus = current === 'Sudah Ujian' ? 'Belum Ujian' : 'Sudah Ujian';
+  ujianOverride[noAsal] = newStatus;
+  saveUjianOverride();
+  updateUjianKPI();
+  renderUjianTable();
+}
+
+function updateUjianKPI() {
+  const sudah = UJIAN_DATA.filter(r => getUjianStatus(r) === 'Sudah Ujian').length;
+  const belum = UJIAN_DATA.length - sudah;
+  const pct   = ((sudah / UJIAN_DATA.length) * 100).toFixed(1);
+  const elS = document.getElementById('ujian-kpi-sudah');
+  const elB = document.getElementById('ujian-kpi-belum');
+  const elP = document.getElementById('ujian-kpi-pct');
+  const elBar = document.getElementById('ujian-kpi-bar');
+  const elSub1 = document.getElementById('ujian-kpi-sudah-sub');
+  const elSub2 = document.getElementById('ujian-kpi-belum-sub');
+  if (elS)   elS.textContent   = sudah;
+  if (elB)   elB.textContent   = belum;
+  if (elP)   elP.textContent   = pct + '%';
+  if (elBar) elBar.style.width = pct + '%';
+  if (elSub1) elSub1.textContent = pct + '% daripada ' + UJIAN_DATA.length;
+  if (elSub2) elSub2.textContent = (100 - parseFloat(pct)).toFixed(1) + '% daripada ' + UJIAN_DATA.length;
+  renderUjianProgressGrid();
+}
+
+function renderUjianProgressGrid() {
+  const grid = document.getElementById('ujian-progress-grid');
+  if (!grid) return;
+
+  const DEPT_CONFIG = [
+    { dept: 'JTMK', color: '#003a70' },
+    { dept: 'JKM',  color: '#0ea5e9' },
+    { dept: 'JKA',  color: '#dc3545' },
+    { dept: 'JKE',  color: '#198754' },
+    { dept: 'JP',   color: '#f59e0b' },
+    { dept: 'JMSK', color: '#8b5cf6' },
+    { dept: 'JKPK', color: '#0891b2' },
+    { dept: 'JPA',  color: '#ec4899' },
+  ];
+
+  // Kira sudah/total per jabatan dari UJIAN_DATA (1 orang = 1 kiraan)
+  const stats = {};
+  DEPT_CONFIG.forEach(d => { stats[d.dept] = { sudah: 0, total: 0 }; });
+  UJIAN_DATA.forEach(r => {
+    if (!stats[r[3]]) return;
+    stats[r[3]].total++;
+    if (getUjianStatus(r) === 'Sudah Ujian') stats[r[3]].sudah++;
+  });
+
+  // Cari terbaik & perlu perhatian (dept yang ada staf)
+  const aktif = DEPT_CONFIG.filter(d => stats[d.dept].total > 0);
+  const pctOf = d => stats[d.dept].total > 0 ? stats[d.dept].sudah / stats[d.dept].total : -1;
+  const terbaik       = aktif.reduce((a, b) => pctOf(a) >= pctOf(b) ? a : b, aktif[0]);
+  const perluPerhatian = aktif.reduce((a, b) => pctOf(a) <= pctOf(b) ? a : b, aktif[0]);
+
+  grid.innerHTML = DEPT_CONFIG.map(({ dept, color }) => {
+    const { sudah, total } = stats[dept];
+    if (total === 0) return '';
+    const pct = ((sudah / total) * 100).toFixed(1);
+    const pctNum = parseFloat(pct);
+    const isTerbaik = dept === terbaik.dept;
+    const isPerlu   = dept === perluPerhatian.dept && !isTerbaik;
+    const badge = isTerbaik
+      ? `<span style="font-size:.7rem;background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:10px;margin-left:4px;">Terbaik</span>`
+      : isPerlu
+        ? `<span style="font-size:.7rem;background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:10px;margin-left:4px;">Perlu Perhatian</span>`
+        : '';
+    const pctColor = pctNum >= 50 ? '#198754' : pctNum >= 30 ? '#f59e0b' : '#dc3545';
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:4px;">
+        <span>${dept}${badge}</span>
+        <span style="color:#003a70;">${sudah} / ${total} &nbsp;<span style="color:${pctColor};font-weight:700;">${pct}%</span></span>
+      </div>
+      <div style="height:8px;border-radius:4px;background:#e5e7eb;">
+        <div style="width:${pct}%;height:100%;border-radius:4px;background:${color};"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _renderZipButtons() {
+  const isAdmin      = currentUser && currentUser.role === 'Admin';
+  const isPenyelaras = currentUser && currentUser.role === 'Penyelaras';
+  const container    = document.getElementById('ujian-zip-btns');
+  const inner        = document.getElementById('ujian-zip-btns-inner');
+  if (!container || !inner) return;
+
+  if (!isAdmin && !isPenyelaras) { container.style.display = 'none'; return; }
+
+  inner.innerHTML = '';
+
+  const DEPTS_UJIAN = ['JTMK','JKM','JKA','JKE','JP','JMSK','JKPK','JPA'];
+  const jabatanList = isAdmin ? DEPTS_UJIAN : [currentUser.dept];
+
+  jabatanList.forEach(jab => {
+    const countLulus = UJIAN_DATA.filter(r => {
+      if (r[3] !== jab) return false;
+      const ld = getUjianLulus(r);
+      return ld ? ld.statusLulus === 'Lulus' : getUjianStatus(r) === 'Sudah Ujian';
+    }).length;
+    if (countLulus === 0) return;
+    inner.innerHTML += `<button id="zip-btn-${jab}" onclick="downloadBadgeZip('${jab}')"
+      style="font-size:.72rem;padding:4px 10px;border-radius:6px;border:1px solid #bbf7d0;background:#fff;color:#15803d;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+      <i class="bi bi-file-zip-fill"></i> ZIP ${jab} <span style="background:#dcfce7;border-radius:10px;padding:0 5px;">${countLulus}</span>
+    </button>`;
+  });
+
+  if (isAdmin) {
+    const totalLulus = UJIAN_DATA.filter(r => {
+      const ld = getUjianLulus(r);
+      return ld ? ld.statusLulus === 'Lulus' : getUjianStatus(r) === 'Sudah Ujian';
+    }).length;
+    inner.innerHTML += `<button id="zip-btn-all" onclick="downloadBadgeZip('')"
+      style="font-size:.72rem;padding:4px 12px;border-radius:6px;border:1px solid #003a70;background:#003a70;color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+      <i class="bi bi-cloud-download-fill"></i> ZIP Semua Jabatan <span style="background:rgba(255,255,255,.25);border-radius:10px;padding:0 5px;">${totalLulus}</span>
+    </button>`;
+  }
+
+  container.style.display = inner.innerHTML ? 'flex' : 'none';
+}
+
+function renderUjianTable() {
+  const dept   = document.getElementById('ujian-filter-dept').value;
+  const status = document.getElementById('ujian-filter-status').value;
+  const lulus  = document.getElementById('ujian-filter-lulus')?.value || '';
+  const search = (document.getElementById('ujian-search')?.value || '').toLowerCase().trim();
+  const isAdmin = currentUser && currentUser.role === 'Admin';
+  const isPenyelaras = currentUser && currentUser.role === 'Penyelaras';
+
+  // Render butang ZIP
+  _renderZipButtons();
+
+  // Tunjuk/sembunyi kolum Tindakan
+  const thT = document.getElementById('ujian-th-tindakan');
+  if (thT) thT.style.display = isAdmin ? '' : 'none';
+
+  let data = UJIAN_DATA.filter(r => {
+    const s      = getUjianStatus(r);
+    const lulusData = getUjianLulus(r);
+    const lStatus = lulusData ? lulusData.statusLulus : (s === 'Sudah Ujian' ? 'Lulus' : '');
+    return (!dept   || r[3] === dept) &&
+           (!status || s === status) &&
+           (!lulus  || lStatus === lulus) &&
+           (!search || r[2].toLowerCase().includes(search));
+  });
+
+  const tbody = document.getElementById('ujian-tbody');
+  const empty = document.getElementById('ujian-empty');
+  const count = document.getElementById('ujian-count');
+  tbody.innerHTML = '';
+  empty.style.display = data.length ? 'none' : 'block';
+
+  if (dept || status || search || lulus) {
+    count.textContent = `Menunjukkan ${data.length} daripada ${UJIAN_DATA.length} pensyarah`;
+  } else {
+    count.textContent = '';
+  }
+
+  const highlight = (text) => {
+    if (!search) return text;
+    const re = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return text.replace(re, '<mark style="background:#fef08a;padding:0 1px;border-radius:2px;">$1</mark>');
+  };
+
+  data.forEach((r, i) => {
+    const s        = getUjianStatus(r);
+    const sudah    = s === 'Sudah Ujian';
+    const lulusData = getUjianLulus(r);
+    const isOverridden = ujianOverride.hasOwnProperty(r[1]) && !lulusData;
+
+    const badge = sudah
+      ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-check-circle-fill"></i> Sudah Ujian${isOverridden ? ' <i class="bi bi-pencil-fill" style="font-size:.6rem;opacity:.6;" title="Dikemaskini oleh Admin"></i>' : ''}</span>`
+      : `<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-x-circle-fill"></i> Belum Ujian</span>`;
+
+    const toggleBtn = isAdmin
+      ? `<td><button onclick="toggleUjianStatus(${r[1]})" style="font-size:.72rem;padding:3px 10px;border-radius:6px;border:1px solid ${sudah ? '#dc3545' : '#198754'};background:${sudah ? '#fff0f0' : '#f0fff4'};color:${sudah ? '#dc3545' : '#198754'};cursor:pointer;white-space:nowrap;"><i class="bi bi-arrow-repeat"></i> ${sudah ? 'Set Belum' : 'Set Sudah'}</button></td>`
+      : '<td style="display:none;"></td>';
+
+    let lulusBadge;
+    if (lulusData) {
+      if (lulusData.statusLulus === 'Lulus') {
+        lulusBadge = `<span title="Markah: ${lulusData.markah}%" style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;cursor:default;"><i class="bi bi-patch-check-fill"></i> ${lulusData.markah}% <span style="background:#15803d;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Lulus)</span></span>`;
+      } else {
+        lulusBadge = `<span title="Markah: ${lulusData.markah}% — Cuba lagi!" style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;cursor:default;"><i class="bi bi-journal-text"></i> ${lulusData.markah}% <span style="background:#a16207;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Perlu Peningkatan)</span></span>`;
+      }
+    } else if (sudah) {
+      const m2025 = getMarkahLama2025(r[2]);
+      lulusBadge = m2025 >= LULUS_THRESHOLD
+        ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-patch-check-fill"></i> ${m2025}% <span style="background:#15803d;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Lulus)</span></span>`
+        : `<span style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-journal-text"></i> ${m2025}% <span style="background:#a16207;color:#fff;border-radius:10px;padding:0 5px;font-size:.65rem;">(Perlu Peningkatan)</span></span>`;
+    } else {
+      lulusBadge = `<span style="color:#9ca3af;font-size:.82rem;">—</span>`;
+    }
+
+    // Butang download badge individual — hanya Lulus, hanya untuk Admin atau Penyelaras jabatan sendiri
+    const isSheetLulus = lulusData && lulusData.statusLulus === 'Lulus';
+    const isStatikLulus = sudah && !lulusData; // lulus dari data statik sahaja (tiada dalam Sheets)
+    const isKedua = sudah && isSheetLulus;     // ada dalam KEDUA-DUA (statik + Sheets lulus)
+    // Badge hanya untuk yang markah ≥85 (atau data statik lama yang dianggap lulus)
+    const markahForBadge = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
+    const isMarkahLulus = markahForBadge >= LULUS_THRESHOLD || (markahForBadge === 0 && sudah && !lulusData);
+    const isRowLulus = (isSheetLulus || sudah) && isMarkahLulus;
+    const canDownload = isRowLulus && (isAdmin || (isPenyelaras && currentUser.dept === r[3]));
+    const safeName = r[2].replace(/'/g,"\\'");
+    let badgeBtn;
+    if (!canDownload) {
+      badgeBtn = `<span style="color:#d1d5db;font-size:.75rem;">—</span>`;
+    } else if (isKedua) {
+      // 2 badge: satu lama (11/11/2025 + markah dari MARKAH_LAMA_2025), satu baru (dari Sheets)
+      const markahLama = getMarkahLama2025(r[2]);
+      badgeBtn = `<div style="display:flex;flex-direction:column;gap:3px;">
+        <button onclick="downloadBadge('${safeName}','${r[3]}',${markahLama},'')"
+           title="Badge 2025 (data lama)"
+           style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #ffd700;background:#fffbeb;color:#92400e;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
+           <i class="bi bi-download"></i> Badge 2025
+         </button>
+        <button onclick="downloadBadge('${safeName}','${r[3]}',${lulusData.markah},'${lulusData.timestamp}')"
+           title="Badge 2026 (ujian terbaru)"
+           style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
+           <i class="bi bi-download"></i> Badge 2026
+         </button>
+      </div>`;
+    } else {
+      // Kalau ada dalam Sheets → guna markah Sheets; kalau statik sahaja → cari markah lama 2025
+      const markahBtn = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
+      const tarikhBtn = lulusData ? lulusData.timestamp : '';
+      badgeBtn = `<button onclick="downloadBadge('${safeName}','${r[3]}',${markahBtn},'${tarikhBtn}')"
+           title="Download badge untuk ${r[2]}"
+           style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #ffd700;background:#fffbeb;color:#92400e;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
+           <i class="bi bi-download"></i> Badge
+         </button>`;
+    }
+
+    // Status 2025 — dari data statik UJIAN_DATA
+    const status2025 = r[4] === 'Sudah Ujian'
+      ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-check-circle-fill"></i> Sudah</span>`
+      : `<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-x-circle-fill"></i> Belum</span>`;
+
+    // Status 2026 — dari Google Sheets
+    const lulusData2026 = getUjianLulus(r);
+    const status2026 = lulusData2026
+      ? (lulusData2026.statusLulus === 'Lulus'
+          ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-check-circle-fill"></i> Sudah</span>`
+          : `<span style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-journal-text"></i> Sudah</span>`)
+      : `<span style="color:#9ca3af;font-size:.82rem;">—</span>`;
+
+    tbody.innerHTML += `<tr>
+      <td>${i+1}</td>
+      <td style="font-weight:600;">${highlight(r[2])}</td>
+      <td><b>${r[3]}</b></td>
+      <td>${status2025}</td>
+      <td>${status2026}</td>
+      <td>${lulusBadge}</td>
+      <td>${badgeBtn}</td>
+      ${toggleBtn}
+    </tr>`;
+  });
+}
+
+/* ─ LAIN-LAIN JABATAN ─ */
+function toggleLainLain(prefix) {
+  const sel   = document.getElementById(prefix + '-jabatan');
+  const group = document.getElementById(prefix + '-lainlain-group');
+  const input = document.getElementById(prefix + '-jabatan-lain');
+  if (sel.value === 'Lain-lain') {
+    group.style.display = 'block';
+    input.required = true;
+  } else {
+    group.style.display = 'none';
+    input.required = false;
+    input.value = '';
+  }
+}
+
+function getJabatanValue(prefix) {
+  const sel = document.getElementById(prefix + '-jabatan');
+  if (sel.value === 'Lain-lain') {
+    const lain = document.getElementById(prefix + '-jabatan-lain').value.trim();
+    return lain || 'Lain-lain';
+  }
+  return sel.value;
+}
+
+/* ─ EDIT MODAL ─ */
+function openEditModal(id) {
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+  document.getElementById('edit-id').value        = r.id;
+  document.getElementById('edit-tarikh-mula').value  = r.tarikhMula || r.tarikh;
+  document.getElementById('edit-tarikh-tamat').value = r.tarikhTamat || r.tarikh;
+  document.getElementById('edit-nama').value      = r.nama;
+  document.getElementById('edit-penganjur').value = r.penganjur;
+  document.getElementById('edit-jenis').value     = r.jenis;
+  document.getElementById('edit-kaedah').value    = r.kaedah || '';
+  document.getElementById('edit-lokasi').value    = r.lokasi || '';
+  document.getElementById('edit-peserta').value   = r.peserta;
+  document.getElementById('edit-objektif').value  = r.objektif || '';
+  document.getElementById('edit-impak').value     = r.impak || '';
+  kiraTempoh('edit');
+
+  // Jabatan — check if "Lain-lain"
+  const fixedDepts = ['JKA','JKE','JKM','JP','JTMK','JKPK','JMSK','JPA'];
+  const jabSel = document.getElementById('edit-jabatan');
+  if (fixedDepts.includes(r.jabatan)) {
+    jabSel.value = r.jabatan;
+    document.getElementById('edit-lainlain-group').style.display = 'none';
+    document.getElementById('edit-jabatan-lain').required = false;
+  } else {
+    jabSel.value = 'Lain-lain';
+    document.getElementById('edit-jabatan-lain').value = r.jabatan;
+    document.getElementById('edit-lainlain-group').style.display = 'block';
+    document.getElementById('edit-jabatan-lain').required = true;
+  }
+
+  document.getElementById('edit-modal-sub').textContent = r.nama;
+  document.getElementById('edit-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal(e, force) {
+  if (!force && e && document.getElementById('edit-modal-box').contains(e.target)) return;
+  document.getElementById('edit-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function saveEdit(e) {
+  e.preventDefault();
+  const id    = parseFloat(document.getElementById('edit-id').value);
+  const idx   = records.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const mula  = document.getElementById('edit-tarikh-mula').value;
+  const tamat = document.getElementById('edit-tarikh-tamat').value;
+  if (new Date(tamat) < new Date(mula)) { alert('Tarikh tamat tidak boleh lebih awal daripada tarikh mula!'); return; }
+  const tempoh = Math.round((new Date(tamat) - new Date(mula)) / 86400000) + 1;
+  records[idx] = {
+    ...records[idx],
+    tarikhMula:  mula,
+    tarikhTamat: tamat,
+    tempoh,
+    tarikh:      mula,
+    jabatan:     getJabatanValue('edit'),
+    nama:        document.getElementById('edit-nama').value,
+    penganjur:   document.getElementById('edit-penganjur').value,
+    jenis:       document.getElementById('edit-jenis').value,
+    kaedah:      document.getElementById('edit-kaedah').value,
+    lokasi:      document.getElementById('edit-lokasi').value,
+    peserta:     parseInt(document.getElementById('edit-peserta').value),
+    objektif:    document.getElementById('edit-objektif').value,
+    impak:       document.getElementById('edit-impak').value,
+  };
+  saveRecords();
+  closeEditModal(null, true);
+  refreshYearSelects();
+  renderTable();
+  renderDashboard();
+}
+
+/* ─ LAPORAN 6 BULAN ─ */
+let chart6BulanInst;
+function render6Bulan() {
+  const year      = document.getElementById('l6-year').value;
+  const separuh   = document.getElementById('l6-separuh').value;
+  const jabatan   = document.getElementById('l6-jabatan').value;
+  const months    = separuh === '1' ? ['01','02','03','04','05','06'] : ['07','08','09','10','11','12'];
+  const label     = separuh === '1' ? 'Jan – Jun' : 'Jul – Dis';
+
+  let data = records;
+  if (year)    data = data.filter(r => r.tarikh.startsWith(year));
+  data = data.filter(r => months.includes(r.tarikh.slice(5,7)));
+  if (jabatan) data = data.filter(r => r.jabatan === jabatan);
+
+  // ── Badge & butang pengesahan ──
+  const effectiveYear = year || new Date().getFullYear();
+  const isKJ = currentUser && currentUser.role === 'Ketua Jabatan';
+  const badgeEl   = document.getElementById('l6-badge-pengesahan');
+  const btnSahkan = document.getElementById('l6-btn-sahkan');
+  const panelEl   = document.getElementById('l6-panel-pengesahan');
+
+  // Tentukan jabatan untuk semak pengesahan:
+  // KJ — jabatan dipilih (jika jabatan sendiri), lain — jabatan dipilih jika ada
+  const KJ_DEPTS_LIST = ['JKA','JKE','JKM','JP','JTMK','JKPK','JMSK','JPA'];
+  const deptToCheck = jabatan && KJ_DEPTS_LIST.includes(jabatan) ? jabatan : null;
+  const isKJOwnDept = isKJ && jabatan === currentUser.dept;
+  const key = deptToCheck ? getPengesahanKey(deptToCheck, separuh, effectiveYear) : null;
+  const pengesahanInfo = key ? pengesahan6Bulan[key] : null;
+
+  if (badgeEl) {
+    if (!deptToCheck) {
+      // Semua Jabatan — tunjuk ringkasan berapa jabatan dah disahkan
+      const disahkan = KJ_DEPTS_LIST.filter(d => pengesahan6Bulan[getPengesahanKey(d, separuh, effectiveYear)]).length;
+      badgeEl.innerHTML = `<span style="font-size:.75rem;background:#f0f4ff;border:1px solid #c7d7f5;border-radius:12px;padding:3px 10px;color:#374151;">
+        <i class="bi bi-patch-check" style="color:#15803d;"></i> ${disahkan}/${KJ_DEPTS_LIST.length} jabatan disahkan</span>`;
+    } else if (pengesahanInfo) {
+      badgeEl.innerHTML = `<span style="font-size:.75rem;background:#dcfce7;border:1px solid #86efac;border-radius:12px;padding:3px 10px;color:#15803d;font-weight:600;">
+        <i class="bi bi-patch-check-fill"></i> ${deptToCheck} Disahkan</span>`;
+    } else {
+      badgeEl.innerHTML = `<span style="font-size:.75rem;background:#fef9c3;border:1px solid #fde047;border-radius:12px;padding:3px 10px;color:#92400e;font-weight:600;">
+        <i class="bi bi-clock-history"></i> ${deptToCheck} Belum Disahkan</span>`;
+    }
+  }
+
+  // Butang sahkan — hanya untuk KJ yang pilih jabatan sendiri dan belum disahkan
+  if (btnSahkan) {
+    if (isKJOwnDept && !pengesahanInfo) {
+      btnSahkan.style.display = 'flex';
+    } else {
+      btnSahkan.style.display = 'none';
+    }
+  }
+
+  if (panelEl) {
+    if (pengesahanInfo && deptToCheck) {
+      panelEl.style.display = 'block';
+      panelEl.innerHTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.82rem;display:flex;align-items:center;gap:10px;">
+        <i class="bi bi-patch-check-fill" style="color:#15803d;font-size:1.3rem;"></i>
+        <div>
+          <div style="font-weight:700;color:#15803d;">Laporan ${deptToCheck} ${label} ${effectiveYear} telah disahkan</div>
+          <div style="color:#374151;margin-top:2px;">Disahkan oleh: <b>${pengesahanInfo.nama}</b> &nbsp;|&nbsp; Ketua Jabatan ${deptToCheck} &nbsp;|&nbsp; Tarikh: ${pengesahanInfo.tarikh}</div>
+        </div>
+      </div>`;
+      if (isKJOwnDept) hideBannerPengesahan();
+    } else {
+      panelEl.style.display = 'none';
+    }
+  }
+
+  // KPI
+  const kpiEl = document.getElementById('l6-kpi');
+  const totalAktiviti = data.length;
+  const totalPeserta  = data.reduce((s,r) => s + r.peserta, 0);
+  const totalKur  = data.filter(r=>r.jenis==='Kurikulum').length;
+  const totalIns  = data.filter(r=>r.jenis==='Instruksional').length;
+  const totalPen  = data.filter(r=>r.jenis==='Penilaian').length;
+  kpiEl.innerHTML = `
+    <div class="stat-card"><div class="dept-label">Jumlah Aktiviti</div><div class="dept-count">${totalAktiviti}</div><div class="dept-sub">${label} ${year||''}</div></div>
+    <div class="stat-card"><div class="dept-label">Jumlah Peserta</div><div class="dept-count">${totalPeserta}</div><div class="dept-sub">orang</div></div>
+    <div class="stat-card"><div class="dept-label">Kurikulum</div><div class="dept-count">${totalKur}</div><div class="dept-sub">aktiviti</div></div>
+    <div class="stat-card"><div class="dept-label">Instruksional</div><div class="dept-count">${totalIns}</div><div class="dept-sub">aktiviti</div></div>
+    <div class="stat-card"><div class="dept-label">Penilaian</div><div class="dept-count">${totalPen}</div><div class="dept-sub">aktiviti</div></div>`;
+
+  // Chart — aktiviti per jabatan
+  if (chart6BulanInst) chart6BulanInst.destroy();
+  chart6BulanInst = new Chart(document.getElementById('chart6Bulan'), {
+    type: 'bar',
+    data: {
+      labels: DEPTS,
+      datasets: CATS.map((cat,i) => ({
+        label: cat,
+        data: DEPTS.map(d => data.filter(r=>r.jabatan===d && r.jenis===cat).length),
+        backgroundColor: ['#003a70','#0ea5e9','#fbbf24'][i], borderRadius:4
+      }))
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}} }
+  });
+
+  // Jadual ringkasan per jabatan
+  const deptTbody = document.getElementById('l6-dept-tbody');
+  deptTbody.innerHTML = '';
+  DEPTS.forEach(d => {
+    const rows = data.filter(r=>r.jabatan===d);
+    const kur = rows.filter(r=>r.jenis==='Kurikulum').length;
+    const ins = rows.filter(r=>r.jenis==='Instruksional').length;
+    const pen = rows.filter(r=>r.jenis==='Penilaian').length;
+    const pes = rows.reduce((s,r)=>s+r.peserta,0);
+    const isLain = d === 'Lain-lain';
+    deptTbody.innerHTML += `<tr>
+      <td><b style="${isLain?'color:#6b7280;':''}">${d}</b></td>
+      <td>${kur}</td><td>${ins}</td><td>${pen}</td>
+      <td><b>${rows.length}</b></td><td>${pes}</td>
+    </tr>`;
+  });
+  // Jumlah row
+  deptTbody.innerHTML += `<tr style="background:#f0f4ff;font-weight:700;">
+    <td>JUMLAH</td>
+    <td>${totalKur}</td><td>${totalIns}</td><td>${totalPen}</td>
+    <td>${totalAktiviti}</td><td>${totalPeserta}</td>
+  </tr>`;
+
+  // Jadual senarai aktiviti
+  const listTbody = document.getElementById('l6-list-tbody');
+  const emptyEl   = document.getElementById('l6-empty');
+  listTbody.innerHTML = '';
+  emptyEl.style.display = data.length ? 'none' : 'block';
+  data.forEach(r => {
+    listTbody.innerHTML += `<tr>
+      <td>${r.tarikh}</td>
+      <td>${r.nama}</td>
+      <td><b>${r.jabatan}</b></td>
+      <td>${badgeHtml(r.jenis)}</td>
+      <td>${r.penganjur}</td>
+      <td style="text-align:center;">${r.peserta}</td>
+    </tr>`;
+  });
+}
+
+function print6Bulan() {
+  const year      = document.getElementById('l6-year').value || new Date().getFullYear();
+  const separuh   = document.getElementById('l6-separuh').value;
+  const jabatan   = document.getElementById('l6-jabatan').value;
+  const label     = separuh === '1' ? 'Separuh Pertama (Jan – Jun)' : 'Separuh Kedua (Jul – Dis)';
+  const labelShort = separuh === '1' ? 'Jan – Jun' : 'Jul – Dis';
+  const months    = separuh === '1' ? ['01','02','03','04','05','06'] : ['07','08','09','10','11','12'];
+  const jabatanLabel = jabatan || 'Semua Jabatan';
+
+  let data = records;
+  if (year)    data = data.filter(r => r.tarikh.startsWith(String(year)));
+  data = data.filter(r => months.includes(r.tarikh.slice(5,7)));
+  if (jabatan) data = data.filter(r => r.jabatan === jabatan);
+
+  const totalAktiviti = data.length;
+  const totalPeserta  = data.reduce((s,r) => s + r.peserta, 0);
+  const totalKur  = data.filter(r=>r.jenis==='Kurikulum').length;
+  const totalIns  = data.filter(r=>r.jenis==='Instruksional').length;
+  const totalPen  = data.filter(r=>r.jenis==='Penilaian').length;
+
+  const deptRows = DEPTS.map(d => {
+    const rows = data.filter(r=>r.jabatan===d);
+    const kur = rows.filter(r=>r.jenis==='Kurikulum').length;
+    const ins = rows.filter(r=>r.jenis==='Instruksional').length;
+    const pen = rows.filter(r=>r.jenis==='Penilaian').length;
+    const pes = rows.reduce((s,r)=>s+r.peserta,0);
+    return `<tr><td style="font-weight:600;">${d}</td><td>${kur}</td><td>${ins}</td><td>${pen}</td><td style="font-weight:700;">${rows.length}</td><td>${pes}</td></tr>`;
+  }).join('');
+
+  const listRows = data.map(r => `<tr>
+    <td>${r.tarikh}</td><td>${r.nama}</td><td style="font-weight:600;">${r.jabatan}</td>
+    <td>${r.jenis}</td><td>${r.penganjur}</td><td style="text-align:center;">${r.peserta}</td>
+  </tr>`).join('');
+
+  // Ambil data pengesahan KJ untuk setiap jabatan
+  const KJ_DEPTS = [
+    { dept:'JKA',  key:'kj_jka'  },
+    { dept:'JKE',  key:'kj_jke'  },
+    { dept:'JKM',  key:'kj_jkm'  },
+    { dept:'JP',   key:'kj_jp'   },
+    { dept:'JTMK', key:'kj_jtmk' },
+    { dept:'JKPK', key:'kj_jkpk' },
+    { dept:'JMSK', key:'kj_jmsk' },
+    { dept:'JPA',  key:'kj_jpa'  },
+  ];
+  const pengesahanRows = KJ_DEPTS.map(({dept, key}) => {
+    const pKey = getPengesahanKey(dept, separuh, year);
+    const info = pengesahan6Bulan[pKey];
+    const namaKJ = USERS[key]?.nama || '—';
+    if (info) {
+      return `<tr>
+        <td style="font-weight:600;">${dept}</td>
+        <td style="font-weight:600;">${namaKJ}</td>
+        <td style="color:#15803d;font-weight:700;">&#10003; Disahkan</td>
+        <td>${info.tarikh}</td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td style="font-weight:600;">${dept}</td>
+        <td>${namaKJ}</td>
+        <td style="color:#b45309;">Belum Disahkan</td>
+        <td>—</td>
+      </tr>`;
+    }
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Laporan 6 Bulan OBE – PKS ${year}</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,"Segoe UI",sans-serif; font-size:12px; color:#1f2328; }
+    .wrap { max-width:760px; margin:0 auto; padding:32px 28px; }
+    .header { background:#003a70; color:#fff; padding:20px 24px; border-radius:0; margin-bottom:24px; }
+    .header .top { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+    .header .logo { width:52px; height:52px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#003a70; font-size:.85rem; flex-shrink:0; }
+    .header h1 { font-size:1rem; font-weight:700; margin:0 0 2px; }
+    .header .sub { font-size:.75rem; color:rgba(255,255,255,.75); }
+    .header .inst { font-size:.8rem; font-weight:700; color:#ffd700; letter-spacing:.3px; }
+    .header hr { border:none; border-top:1px solid rgba(255,255,255,.25); margin:10px 0 8px; }
+    .header .meta { font-size:.75rem; color:rgba(255,255,255,.8); display:flex; gap:18px; flex-wrap:wrap; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+    .kpi-card { border:1px solid #e5e7eb; border-radius:6px; padding:10px 12px; background:#f7f8fa; text-align:center; }
+    .kpi-card .kl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#6c757d; }
+    .kpi-card .kv { font-size:1.4rem; font-weight:700; color:#003a70; }
+    .sec { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#003a70; border-bottom:2px solid #ffd700; padding-bottom:3px; margin:18px 0 10px; }
+    table { width:100%; border-collapse:collapse; font-size:.78rem; }
+    th { background:#003a70; color:#fff; padding:7px 10px; text-align:left; font-size:.7rem; }
+    td { padding:6px 10px; border-bottom:1px solid #e5e7eb; }
+    tr:nth-child(even) td { background:#f7f8fa; }
+    .total-row td { background:#e8f0fe !important; font-weight:700; }
+    .sign-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:10px; }
+    .sign-box { border:1px solid #e5e7eb; border-radius:6px; padding:12px 14px; background:#fafafa; }
+    .sign-box .sl { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#6c757d; margin-bottom:8px; }
+    .sign-line { height:44px; border-bottom:1px dashed #d1d5db; margin-bottom:8px; }
+    .sign-box .sn { font-size:.78rem; font-weight:700; }
+    .sign-box .sf { font-size:.72rem; color:#6c757d; margin-top:4px; }
+    .footer { margin-top:28px; border-top:1px solid #e5e7eb; padding-top:8px; font-size:.68rem; color:#9ca3af; text-align:center; }
+    @page { margin:18mm 14mm; }
+    @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  </style></head><body>
+  <div class="wrap">
+    <div class="header">
+      <div class="top">
+        <div class="logo"><img src="logo.png" alt="PKS" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" onerror="this.style.display='none';this.parentElement.textContent='PKS';" /></div>
+        <div>
+          <div class="inst">POLITEKNIK KUCHING SARAWAK</div>
+          <div class="sub">Sistem Laporan OBE (SiLOBE) – Outcomes Based Education</div>
+        </div>
+      </div>
+      <hr/>
+      <h1>Laporan Keseluruhan Aktiviti OBE – ${jabatanLabel} – ${label} ${year}</h1>
+      <div class="meta"><span>📅 Tempoh: ${label} ${year}</span><span>🏢 Jabatan: ${jabatanLabel}</span><span>📊 Jumlah: ${totalAktiviti} aktiviti</span><span>👥 ${totalPeserta} peserta</span></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kl">Jumlah Aktiviti</div><div class="kv">${totalAktiviti}</div></div>
+      <div class="kpi-card"><div class="kl">Jumlah Peserta</div><div class="kv">${totalPeserta}</div></div>
+      <div class="kpi-card"><div class="kl">Kurikulum</div><div class="kv">${totalKur}</div></div>
+      <div class="kpi-card"><div class="kl">Instruksional</div><div class="kv">${totalIns}</div></div>
+      <div class="kpi-card"><div class="kl">Penilaian</div><div class="kv">${totalPen}</div></div>
+    </div>
+
+    <div class="sec">Ringkasan Mengikut Jabatan</div>
+    <table>
+      <thead><tr><th>Jabatan</th><th>Kurikulum</th><th>Instruksional</th><th>Penilaian</th><th>Jumlah Aktiviti</th><th>Jumlah Peserta</th></tr></thead>
+      <tbody>${deptRows}<tr class="total-row"><td>JUMLAH</td><td>${totalKur}</td><td>${totalIns}</td><td>${totalPen}</td><td>${totalAktiviti}</td><td>${totalPeserta}</td></tr></tbody>
+    </table>
+
+    <div class="sec">Senarai Aktiviti</div>
+    <table>
+      <thead><tr><th>Tarikh</th><th>Nama Aktiviti</th><th>Jabatan</th><th>Kategori</th><th>Penganjur</th><th>Peserta</th></tr></thead>
+      <tbody>${listRows}</tbody>
+    </table>
+
+    <div class="sec" style="margin-top:32px;">Pengesahan Ketua Jabatan</div>
+    <table>
+      <thead><tr><th>Jabatan</th><th>Nama Ketua Jabatan</th><th>Status</th><th>Tarikh Pengesahan</th></tr></thead>
+      <tbody>${pengesahanRows}</tbody>
+    </table>
+
+    <div class="sec" style="margin-top:28px;">Tandatangan Pegawai</div>
+    <div class="sign-grid">
+      <div class="sign-box">
+        <div class="sl">Disediakan Oleh</div>
+        <div class="sign-line"></div>
+        <div class="sn">Penyelaras OBE PKS</div>
+        <div class="sf">Nama &nbsp;: ____________________</div>
+        <div class="sf">Cop &nbsp;&nbsp;&nbsp;: ____________________</div>
+        <div class="sf">Tarikh: ____________________</div>
+      </div>
+      <div class="sign-box">
+        <div class="sl">Disemak Oleh</div>
+        <div class="sign-line"></div>
+        <div class="sn">Ketua Unit Jaminan Kualiti</div>
+        <div class="sf">Nama &nbsp;: ____________________</div>
+        <div class="sf">Cop &nbsp;&nbsp;&nbsp;: ____________________</div>
+        <div class="sf">Tarikh: ____________________</div>
+      </div>
+      <div class="sign-box">
+        <div class="sl">Disahkan Oleh</div>
+        <div class="sign-line"></div>
+        <div class="sn">Timbalan Pengarah Akademik</div>
+        <div class="sf">Nama &nbsp;: ____________________</div>
+        <div class="sf">Cop &nbsp;&nbsp;&nbsp;: ____________________</div>
+        <div class="sf">Tarikh: ____________________</div>
+      </div>
+    </div>
+
+    <div class="footer">Dicetak daripada Sistem Laporan OBE (SiLOBE) – Politeknik Kuching Sarawak &nbsp;|&nbsp; ${new Date().toLocaleDateString('ms-MY',{day:'numeric',month:'long',year:'numeric'})}</div>
+  </div>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=860,height=750');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { w.print(); }, 400);
+}
+
+/* ─ INIT ─ */
+function refreshAll() {
+  refreshYearSelects();
+  renderDashboard();
+  renderTable();
+}
+
+refreshYearSelects();
+applyLoginState();
+renderDashboard();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
