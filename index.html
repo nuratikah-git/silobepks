@@ -581,6 +581,18 @@
 
     <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="view active">
+      <!-- Filter Tahun Dashboard -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:.8rem;font-weight:700;color:#374151;"><i class="bi bi-funnel"></i> Tapis Tahun:</span>
+        <select id="dashboard-year-filter" onchange="renderDashboard()" style="font-size:.82rem;padding:5px 12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#1f2328;cursor:pointer;font-weight:600;">
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+          <option value="">Semua Tahun</option>
+        </select>
+        <span id="dashboard-year-label" style="font-size:.75rem;color:#6c757d;"></span>
+      </div>
       <div class="stat-cards" id="dept-cards"></div>
       <div class="chart-row">
         <div class="section-card">
@@ -1639,12 +1651,29 @@ function refreshYearSelects() {
 let chartDeptInst, chartCatInst;
 
 function renderDashboard() {
+  // Dapatkan tahun yang dipilih dari filter
+  const yearSel = document.getElementById('dashboard-year-filter');
+  const selectedYear = yearSel ? yearSel.value : '';
+
+  // Tapis rekod ikut tahun
+  const filtered = selectedYear
+    ? records.filter(r => (r.tarikhMula || r.tarikh || '').startsWith(selectedYear))
+    : records;
+
+  // Update label info
+  const labelEl = document.getElementById('dashboard-year-label');
+  if (labelEl) {
+    labelEl.textContent = selectedYear
+      ? `${filtered.length} aktiviti ditemui untuk tahun ${selectedYear}`
+      : `${filtered.length} aktiviti (semua tahun)`;
+  }
+
   // Stat cards
   const c = document.getElementById('dept-cards');
   c.innerHTML = '';
-  const max = Math.max(...DEPTS.map(d => records.filter(r=>r.jabatan===d).length), 1);
+  const max = Math.max(...DEPTS.map(d => filtered.filter(r=>r.jabatan===d).length), 1);
   DEPTS.forEach(d => {
-    const n   = records.filter(r=>r.jabatan===d).length;
+    const n   = filtered.filter(r=>r.jabatan===d).length;
     const pct = Math.round(n / max * 100);
     const isLain = d === 'Lain-lain';
     c.innerHTML += `<div class="stat-card"${isLain ? ' style="border-left:3px solid #9ca3af;"' : ''}>
@@ -1658,7 +1687,7 @@ function renderDashboard() {
   // Recent table
   const tbody = document.getElementById('recent-tbody');
   tbody.innerHTML = '';
-  records.slice(0,5).forEach(r => {
+  filtered.slice(0,5).forEach(r => {
     tbody.innerHTML += `<tr>
       <td>${r.tarikh}</td><td>${r.nama}</td>
       <td><b>${r.jabatan}</b></td><td>${badgeHtml(r.jenis)}</td><td>${r.peserta}</td>
@@ -1671,7 +1700,7 @@ function renderDashboard() {
     type: 'bar',
     data: {
       labels: DEPTS,
-      datasets: [{ label: 'Aktiviti', data: DEPTS.map(d=>records.filter(r=>r.jabatan===d).length),
+      datasets: [{ label: 'Aktiviti', data: DEPTS.map(d=>filtered.filter(r=>r.jabatan===d).length),
         backgroundColor: '#003a70', borderRadius: 6 }]
     },
     options: { responsive:true, maintainAspectRatio:false,
@@ -1684,7 +1713,7 @@ function renderDashboard() {
     type: 'doughnut',
     data: {
       labels: CATS,
-      datasets: [{ data: CATS.map(c=>records.filter(r=>r.jenis===c).length),
+      datasets: [{ data: CATS.map(cat=>filtered.filter(r=>r.jenis===cat).length),
         backgroundColor: ['#003a70','#0ea5e9','#fbbf24'], borderWidth:2 }]
     },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
@@ -3598,6 +3627,15 @@ function refreshAll() {
 
 refreshYearSelects();
 applyLoginState();
+// Set default dashboard year filter kepada tahun semasa
+(function() {
+  const sel = document.getElementById('dashboard-year-filter');
+  if (sel) {
+    const thisYear = String(new Date().getFullYear());
+    const opt = Array.from(sel.options).find(o => o.value === thisYear);
+    if (opt) sel.value = thisYear;
+  }
+})();
 renderDashboard();
 </script>
 
