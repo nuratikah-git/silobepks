@@ -3105,7 +3105,7 @@ function renderUjianTable() {
     // Butang download badge individual — hanya Lulus, hanya untuk Admin atau Penyelaras jabatan sendiri
     const isSheetLulus = lulusData && lulusData.statusLulus === 'Lulus';
     const isStatikLulus = sudah && !lulusData; // lulus dari data statik sahaja (tiada dalam Sheets)
-    const isKedua = sudah && isSheetLulus;     // ada dalam KEDUA-DUA (statik + Sheets lulus)
+    const isKedua = sudah && isSheetLulus;     // ada dalam KEDUA-DUA (statik 2025 + Sheets 2026 lulus)
     // Badge hanya untuk yang markah ≥85 (atau data statik lama yang dianggap lulus)
     const markahForBadge = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
     const isMarkahLulus = markahForBadge >= LULUS_THRESHOLD || (markahForBadge === 0 && sudah && !lulusData);
@@ -3116,7 +3116,7 @@ function renderUjianTable() {
     if (!canDownload) {
       badgeBtn = `<span style="color:#d1d5db;font-size:.75rem;">—</span>`;
     } else if (isKedua) {
-      // 2 badge: satu lama (11/11/2025 + markah dari MARKAH_LAMA_2025), satu baru (dari Sheets)
+      // Ada ujian 2025 (statik) DAN ujian 2026 (Sheets) — papar kedua-dua badge
       const markahLama = getMarkahLama2025(r[2]);
       badgeBtn = `<div style="display:flex;flex-direction:column;gap:3px;">
         <button onclick="downloadBadge('${safeName}','${r[3]}',${markahLama},'')"
@@ -3130,14 +3130,20 @@ function renderUjianTable() {
            <i class="bi bi-download"></i> Badge 2026
          </button>
       </div>`;
+    } else if (isSheetLulus) {
+      // Lulus 2026 sahaja (tiada dalam data statik 2025) — Badge 2026 je
+      badgeBtn = `<button onclick="downloadBadge('${safeName}','${r[3]}',${lulusData.markah},'${lulusData.timestamp}')"
+           title="Badge 2026 (ujian terbaru)"
+           style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
+           <i class="bi bi-download"></i> Badge 2026
+         </button>`;
     } else {
-      // Kalau ada dalam Sheets → guna markah Sheets; kalau statik sahaja → cari markah lama 2025
-      const markahBtn = lulusData ? lulusData.markah : getMarkahLama2025(r[2]);
-      const tarikhBtn = lulusData ? lulusData.timestamp : '';
-      badgeBtn = `<button onclick="downloadBadge('${safeName}','${r[3]}',${markahBtn},'${tarikhBtn}')"
-           title="Download badge untuk ${r[2]}"
+      // Lulus 2025 sahaja (dari data statik, tiada dalam Sheets 2026) — Badge 2025 je
+      const markahBtn = getMarkahLama2025(r[2]);
+      badgeBtn = `<button onclick="downloadBadge('${safeName}','${r[3]}',${markahBtn},'')"
+           title="Badge 2025 (data lama)"
            style="font-size:.7rem;padding:3px 9px;border-radius:6px;border:1px solid #ffd700;background:#fffbeb;color:#92400e;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-weight:600;">
-           <i class="bi bi-download"></i> Badge
+           <i class="bi bi-download"></i> Badge 2025
          </button>`;
     }
 
