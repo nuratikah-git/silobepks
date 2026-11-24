@@ -3755,5 +3755,145 @@ renderDashboard();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ══ VISITOR COUNTER (localStorage) ══ -->
+<div id="visitor-badge" style="
+  position: fixed; bottom: 18px; right: 18px;
+  background: #003a70; color: #ffd700;
+  border-radius: 20px; padding: 7px 16px;
+  font-size: .78rem; font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0,0,0,.28);
+  z-index: 9999; display: flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none;
+" onclick="toggleVisitorDetail()" title="Klik untuk lihat butiran">
+  <i class="bi bi-people-fill"></i>
+  <span>Pelawat: <span id="vc-total">0</span></span>
+  <i class="bi bi-chevron-up" id="vc-chevron" style="font-size:.65rem;opacity:.7;"></i>
+</div>
+
+<!-- Panel butiran klik menu -->
+<div id="visitor-detail" style="
+  display: none;
+  position: fixed; bottom: 58px; right: 18px;
+  background: #fff; border: 1px solid #dee2e6;
+  border-radius: 12px; padding: 14px 16px;
+  font-size: .78rem; color: #1f2328;
+  box-shadow: 0 4px 20px rgba(0,0,0,.18);
+  z-index: 9998; min-width: 220px;
+  max-height: 340px; overflow-y: auto;
+">
+  <div style="font-weight:700;color:#003a70;margin-bottom:10px;font-size:.82rem;">
+    <i class="bi bi-bar-chart-steps"></i> Statistik Klik Menu
+  </div>
+  <div id="vc-menu-list"></div>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;">
+    <button onclick="resetVisitorCount()" style="
+      background:#fff;border:1px solid #d1d5db;border-radius:6px;
+      padding:3px 10px;font-size:.72rem;color:#6c757d;cursor:pointer;
+    "><i class="bi bi-trash3"></i> Reset</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── Senarai menu yang dikira ──
+  const MENU_KEYS = [
+    { key: 'dashboard',       label: 'Dashboard',              icon: 'bi-speedometer2' },
+    { key: 'senarai',         label: 'Senarai Laporan',        icon: 'bi-table' },
+    { key: 'portal-obe',      label: 'Portal OBE PKS',         icon: 'bi-grid-3x3-gap-fill' },
+    { key: 'cqi-pks',         label: 'CQI PKS',                icon: 'bi-folder2-open' },
+    { key: 'ujian-obe',       label: 'Status Ujian Pensyarah', icon: 'bi-patch-check-fill' },
+    { key: 'stat-jabatan',    label: 'Statistik Jabatan',      icon: 'bi-bar-chart-line' },
+    { key: 'stat-kategori',   label: 'Statistik Kategori',     icon: 'bi-pie-chart' },
+    { key: 'laporan-bulanan', label: 'Laporan Bulanan',        icon: 'bi-calendar-month' },
+    { key: 'laporan-tahunan', label: 'Laporan Tahunan',        icon: 'bi-calendar-range' },
+    { key: 'laporan-6bulan',  label: 'Laporan 6 Bulan',        icon: 'bi-clipboard2-data' },
+    { key: 'input',           label: 'Input Laporan',          icon: 'bi-pencil-square' },
+  ];
+
+  // ── Muat data dari localStorage ──
+  function loadData() {
+    try { return JSON.parse(localStorage.getItem('silobe_vc') || '{}'); }
+    catch { return {}; }
+  }
+  function saveData(d) {
+    localStorage.setItem('silobe_vc', JSON.stringify(d));
+  }
+
+  // ── Kira lawatan halaman (bila web dibuka) ──
+  let data = loadData();
+  data._visits = (data._visits || 0) + 1;
+  saveData(data);
+  document.getElementById('vc-total').textContent = data._visits.toLocaleString();
+
+  // ── Kira klik menu ──
+  window._vcTrackMenu = function(menuKey) {
+    let d = loadData();
+    d[menuKey] = (d[menuKey] || 0) + 1;
+    saveData(d);
+  };
+
+  // ── Render senarai klik menu ──
+  window._vcRenderDetail = function() {
+    const d = loadData();
+    const list = document.getElementById('vc-menu-list');
+    const max = Math.max(1, ...MENU_KEYS.map(m => d[m.key] || 0));
+    list.innerHTML = MENU_KEYS.map(m => {
+      const count = d[m.key] || 0;
+      const pct = Math.round((count / max) * 100);
+      return `<div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <span style="color:#374151;"><i class="bi ${m.icon}" style="font-size:.7rem;margin-right:4px;"></i>${m.label}</span>
+          <span style="font-weight:700;color:#003a70;">${count}</span>
+        </div>
+        <div style="height:4px;background:#e5e7eb;border-radius:4px;">
+          <div style="height:100%;width:${pct}%;background:#003a70;border-radius:4px;transition:width .3s;"></div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  // ── Toggle panel butiran ──
+  window.toggleVisitorDetail = function() {
+    // Hanya Admin boleh lihat panel statistik
+    const cu = JSON.parse(localStorage.getItem('obe_user') || 'null');
+    if (!cu || cu.role !== 'Admin') {
+      return; // Sembunyikan terus jika bukan Admin
+    }
+    const panel = document.getElementById('visitor-detail');
+    const chevron = document.getElementById('vc-chevron');
+    const isOpen = panel.style.display === 'block';
+    if (isOpen) {
+      panel.style.display = 'none';
+      chevron.className = 'bi bi-chevron-up';
+      chevron.style.fontSize = '.65rem';
+      chevron.style.opacity = '.7';
+    } else {
+      _vcRenderDetail();
+      panel.style.display = 'block';
+      chevron.className = 'bi bi-chevron-down';
+    }
+  };
+
+  // ── Reset kiraan ──
+  window.resetVisitorCount = function() {
+    if (!confirm('Reset semua kiraan pelawat dan klik menu?')) return;
+    localStorage.removeItem('silobe_vc');
+    document.getElementById('vc-total').textContent = '0';
+    document.getElementById('visitor-detail').style.display = 'none';
+  };
+
+  // ── Patch showView untuk track klik menu ──
+  const _origShowView = window.showView;
+  window.showView = function(viewId, el) {
+    _vcTrackMenu(viewId);
+    // Kemaskini jumlah dalam badge
+    const d = loadData();
+    document.getElementById('vc-total').textContent = (d._visits || 0).toLocaleString();
+    if (_origShowView) _origShowView(viewId, el);
+  };
+})();
+</script>
+
 </body>
 </html>
