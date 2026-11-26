@@ -2239,6 +2239,7 @@ const UJIAN_DATA = [
   [68,68,'MOHD SHAHRIZAN BIN KHAMIS','JKM','Belum Ujian'],
   [69,69,'MOHD SHAZZANY BIN KERNI','JKM','Belum Ujian'],
   [70,70,'MOHD FAZRULLAH BIN ZAKARIA','JKM','Belum Ujian'],
+  [324,324,'MOHD NOR HAKIM BIN AB WAHAB','JKM','Belum Ujian'],
   [71,71,'MOHD RIZAL BIN ABDUL RAMAN','JKM','Sudah Ujian'],
   [72,72,'MUHAMMAD IQMAL QUSYAIRIE BIN MAZLAN','JKM','Belum Ujian'],
   [73,73,'MUHAMMAD ZARIL BIN ZAINI','JKM','Sudah Ujian'],
@@ -2322,7 +2323,7 @@ const UJIAN_DATA = [
   [151,151,'TANG HING KWONG','JKA','Belum Ujian'],
   [152,152,'TIONG HUA SANG','JKA','Belum Ujian'],
   [153,153,'WIDAD SYAMILA BINTI SAMSUDIN','JKA','Belum Ujian'],
-  [321,321,'YUSMIN BIN YAAKUB','JKA','Belum Ujian'],
+  [325,325,'YUSMIN BIN YAAKUB','JKA','Belum Ujian'],
   [154,154,'ZAINAP BINTI HAJI LAMAT','JKA','Belum Ujian'],
   [155,155,'ABANG SYAFIQNURAIN BIN ABANG SHOKERAN','JKE','Belum Ujian'],
   [156,156,'ABDUL FATA BIN ABDUL TALIP','JKE','Sudah Ujian'],
@@ -2373,8 +2374,7 @@ const UJIAN_DATA = [
   [202,202,'KINTAN BINTI OTHMAN','JKPK','Belum Ujian'],
   [203,203,'MASLINA BINTI BUANG','JKPK','Sudah Ujian'],
   [204,204,'MUHAMMAD BILAL BIN MOKHTAR','JKPK','Belum Ujian'],
-  [205,205,'MUHAMMAD FAEZ BIN ABD RAHMAN','JKPK','Sudah Ujian'],
-  [206,206,'NOR HAKIMAH BINTI AHMAD SUBRI','JKPK','Belum Ujian'],
+  [205,205,'TS. MUHAMMAD FAEZ BIN ABD RAHMAN','JKPK','Sudah Ujian'],
   [207,207,'NUR LYDIA BINTI OTHMAN','JKPK','Sudah Ujian'],
   [208,208,'NUR\'AIN FAMIEZA BINTI ROSDI','JKPK','Belum Ujian'],
   [209,209,'NURWIRANI BINTI NILI','JKPK','Belum Ujian'],
@@ -2389,6 +2389,7 @@ const UJIAN_DATA = [
   [219,219,'EMY MARINA BINTI HASSAN','JP','Belum Ujian'],
   [220,220,'ERMIZAM BIN EDNI','JP','Belum Ujian'],
   [221,221,'FARIDAH BINTI CHE IN','JP','Sudah Ujian'],
+  [322,322,'FATIN NUR HAZIQAH BINTI ABON','JP','Belum Ujian'],
   [222,222,'FLORENCE FLETCHER','JP','Sudah Ujian'],
   [223,223,'HAIRULHANA BINTI ZAWAWI','JP','Belum Ujian'],
   [224,224,'HARTYNI BINTI MASTOR','JP','Sudah Ujian'],
@@ -2479,6 +2480,7 @@ const UJIAN_DATA = [
   [310,310,'NUR MAISARA SYAHIRAH BINTI ZAINAL ABIDIN','JPA','Sudah Ujian'],
   [311,311,'NURIZAN BINTI SAURY','JPA','Belum Ujian'],
   [312,312,'NURSHAKHUZAIMAH BINTI SAHMAT','JPA','Belum Ujian'],
+  [323,323,'NUURQURATU AINI BINTI IBRAHIM','JPA','Belum Ujian'],
   [313,313,'NUZAIMAH BINTI MUDA','JPA','Belum Ujian'],
   [314,314,'PHYLLISCIA ANAK TOMAN','JPA','Belum Ujian'],
   [315,315,'SHARIFAH KHUZAIMAH BINTI WAN YUSUP','JPA','Sudah Ujian'],
@@ -2490,7 +2492,7 @@ const UJIAN_DATA = [
 ];
 
 // Nama yang dikeluarkan daripada paparan, termasuk jika muncul semula dalam data Google Sheets.
-const UJIAN_EXCLUDED = new Set(['KHAIRUNISSA BINTI MOSTAFA', 'NORWARDATUN BINTI ABD RONI', 'AZIS BIN SAPALI', 'SUIT BIN BOJI']);
+const UJIAN_EXCLUDED = new Set(['KHAIRUNISSA BINTI MOSTAFA', 'NORWARDATUN BINTI ABD RONI', 'AZIS BIN SAPALI', 'SUIT BIN BOJI', 'NOR HAKIMAH BINTI AHMAD SUBRI']);
 
 /* ─ GOOGLE SHEETS INTEGRATION – UJIAN KEFAHAMAN OBE ─ */
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc11aJngCfZaxicllehTsK31FtXlrzeA8PLRsiz2llkn3_p-LU-OOJrxPxuizhpys/exec';
@@ -3063,11 +3065,23 @@ function renderUjianProgressGrid() {
   const terbaik       = aktif.reduce((a, b) => pctOf(a) >= pctOf(b) ? a : b, aktif[0]);
   const perluPerhatian = aktif.reduce((a, b) => pctOf(a) <= pctOf(b) ? a : b, aktif[0]);
 
+  // Ranking ikut peratus kemajuan; jabatan seri berkongsi kedudukan.
+  const ranked = [...aktif].sort((a, b) => pctOf(b) - pctOf(a));
+  const rankByDept = new Map();
+  let currentRank = 0;
+  ranked.forEach((d, index) => {
+    if (index === 0 || pctOf(d) !== pctOf(ranked[index - 1])) currentRank = index + 1;
+    rankByDept.set(d.dept, currentRank);
+  });
+
   grid.innerHTML = DEPT_CONFIG.map(({ dept, color }) => {
     const { sudah, total } = stats[dept];
     if (total === 0) return '';
     const pct = ((sudah / total) * 100).toFixed(1);
     const pctNum = parseFloat(pct);
+    const rank = rankByDept.get(dept);
+    const rankColor = rank === 1 ? ['#fef3c7','#92400e'] : rank === 2 ? ['#f1f5f9','#475569'] : rank === 3 ? ['#ffedd5','#9a3412'] : ['#eff6ff','#1d4ed8'];
+    const rankBadge = `<span title="Ranking ${rank} daripada ${aktif.length}, ikut peratus kemajuan" style="font-size:.68rem;background:${rankColor[0]};color:${rankColor[1]};padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;">#${rank}</span>`;
     const isTerbaik = dept === terbaik.dept;
     const isPerlu   = dept === perluPerhatian.dept && !isTerbaik;
     const badge = isTerbaik
@@ -3078,7 +3092,7 @@ function renderUjianProgressGrid() {
     const pctColor = pctNum >= 50 ? '#198754' : pctNum >= 30 ? '#f59e0b' : '#dc3545';
     return `<div>
       <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:4px;">
-        <span>${dept}${badge}</span>
+        <span>${dept}${rankBadge}${badge}</span>
         <span style="color:#003a70;">${sudah} / ${total} &nbsp;<span style="color:${pctColor};font-weight:700;">${pct}%</span></span>
       </div>
       <div style="height:8px;border-radius:4px;background:#e5e7eb;">
