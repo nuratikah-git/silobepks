@@ -2238,8 +2238,8 @@ const UJIAN_DATA = [
   [67,67,'MOHD SARHAN BIN OTHMAN','JKM','Belum Ujian'],
   [68,68,'MOHD SHAHRIZAN BIN KHAMIS','JKM','Belum Ujian'],
   [69,69,'MOHD SHAZZANY BIN KERNI','JKM','Belum Ujian'],
-  [70,70,'MOHD. FAZRULLAH BIN ZAKARIA','JKM','Belum Ujian'],
-  [71,71,'MOHD.RIZAL BIN ABDUL RAMAN','JKM','Sudah Ujian'],
+  [70,70,'MOHD FAZRULLAH BIN ZAKARIA','JKM','Belum Ujian'],
+  [71,71,'MOHD RIZAL BIN ABDUL RAMAN','JKM','Sudah Ujian'],
   [72,72,'MUHAMMAD IQMAL QUSYAIRIE BIN MAZLAN','JKM','Belum Ujian'],
   [73,73,'MUHAMMAD ZARIL BIN ZAINI','JKM','Sudah Ujian'],
   [74,74,'NOOR SUHAIZLIN BINTI SAUTI','JKM','Sudah Ujian'],
@@ -2268,6 +2268,7 @@ const UJIAN_DATA = [
   [97,97,'ZAINAL ABIDDIN BIN AHMAD','JKM','Sudah Ujian'],
   [98,98,'ZENTY RAZILANATY BINTI SAHARI','JKM','Belum Ujian'],
   [99,99,'ZETY NORFARZILLA BINTI HOSMAN','JKM','Sudah Ujian'],
+  [321,321,'SITI NORHANA BINTI SELAMAT','JKM','Belum Ujian'],
   [100,100,'AFHAM ZULHUSMI BIN AHMAD','JKA','Sudah Ujian'],
   [101,101,'AHMAD MUSLIM BIN ALI','JKA','Belum Ujian'],
   [102,102,'ALFRED BIN A PIRIEN @ ALEXANDER PIRIN','JKA','Belum Ujian'],
@@ -2286,12 +2287,12 @@ const UJIAN_DATA = [
   [115,115,'HISYARITA BINTI ABD WAHID','JKA','Belum Ujian'],
   [116,116,'JOAN WANG YEE JUEN','JKA','Belum Ujian'],
   [117,117,'JOSHUA ANAK RIBI','JKA','Belum Ujian'],
-  [118,118,'KHAIRUL AZAM BIN ELIAS @ MAYAH','JKA','Belum Ujian'],
+  [118,118,'TS. KHAIRUL AZAM BIN ELIAS @ MAYAH','JKA','Belum Ujian'],
   [119,119,'LEDIA ANAK ANGUL','JKA','Belum Ujian'],
   [120,120,'LEE KONG FAH','JKA','Belum Ujian'],
   [121,121,'LIM CHE CHIEN','JKA','Belum Ujian'],
   [122,122,'LUKMAN NUL HAKIM BIN MD TERASID','JKA','Sudah Ujian'],
-  [123,123,'MARDIANA BINTI MOHAMAD','JKA','Belum Ujian'],
+  [123,123,'TS. MARDIANA BINTI MOHAMAD','JKA','Belum Ujian'],
   [124,124,'MIMI MALISA BINTI DOLHAN','JKA','Belum Ujian'],
   [125,125,'MOHAMED YUSUP BIN MOHAMAD YACKUB','JKA','Belum Ujian'],
   [126,126,'MOHAMMAD PAUZI BIN MOKHTAR','JKA','Belum Ujian'],
@@ -2304,7 +2305,6 @@ const UJIAN_DATA = [
   [133,133,'NORHAFIZAH BINTI MANAP','JKA','Belum Ujian'],
   [134,134,'NORMAH BINTI JAINUDIN @ MOHAMAD','JKA','Belum Ujian'],
   [135,135,'NORMIN ANAK MINCHONG','JKA','Belum Ujian'],
-  [136,136,'NORWARDATUN BINTI ABD RONI','JKA','Belum Ujian'],
   [137,137,'NUR AZLINA BINTI HARIFFIN','JKA','Belum Ujian'],
   [138,138,'NUR ZULZIKA BIN MOHAMMAD','JKA','Belum Ujian'],
   [139,139,'NURATIKAH BINTI SEMAN','JKA','Belum Ujian'],
@@ -2432,7 +2432,6 @@ const UJIAN_DATA = [
   [261,261,'FARAH BINTI ABDUL MALEK','JMSK','Belum Ujian'],
   [262,262,'HALIMAH BINTI ROBERT','JMSK','Belum Ujian'],
   [263,263,'JEFFERY ABAT ANAK MARAMAT','JMSK','Belum Ujian'],
-  [264,264,'KHAIRUNISSA BINTI MOSTAFA','JMSK','Belum Ujian'],
   [265,265,'KHALID HUSSEINE BIN TUAH','JMSK','Belum Ujian'],
   [266,266,'LENNY KOLINA BINTI MAJALIS','JMSK','Belum Ujian'],
   [267,267,'LING YING LEH','JMSK','Belum Ujian'],
@@ -2448,7 +2447,7 @@ const UJIAN_DATA = [
   [277,277,'NOR SYAHIDAL ARSHAINI BINTI SHAMSUDIN','JMSK','Sudah Ujian'],
   [278,278,'NORHIDAYAH BINTI JAMALUDIN','JMSK','Belum Ujian'],
   [279,279,'NURUL HAYATI BINTI JAMIL','JMSK','Belum Ujian'],
-  [280,280,'NURUL LIYANA BINTI MAHMOD','JMSK','Sudah Ujian'],
+  [280,280,'TS. NURUL LIYANA BINTI MAHMOD','JMSK','Sudah Ujian'],
   [281,281,'ROHAIDA BINTI ABU BAKAR','JMSK','Belum Ujian'],
   [282,282,'SHAH NAZIM BIN SHAHAR','JMSK','Belum Ujian'],
   [283,283,'SITI AISYAH BINTI ISMAWI','JMSK','Belum Ujian'],
@@ -2491,6 +2490,9 @@ const UJIAN_DATA = [
   [320,320,'ZAINAB BINTI MOHAMAD AHMAD','JPA','Belum Ujian'],
 ];
 
+// Nama yang dikeluarkan daripada paparan, termasuk jika muncul semula dalam data Google Sheets.
+const UJIAN_EXCLUDED = new Set(['KHAIRUNISSA BINTI MOSTAFA', 'NORWARDATUN BINTI ABD RONI']);
+
 /* ─ GOOGLE SHEETS INTEGRATION – UJIAN KEFAHAMAN OBE ─ */
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc11aJngCfZaxicllehTsK31FtXlrzeA8PLRsiz2llkn3_p-LU-OOJrxPxuizhpys/exec';
 const LULUS_THRESHOLD = 85; // markah % lulus
@@ -2525,10 +2527,9 @@ const MARKAH_LAMA_2025 = {
   'WEE CHIAU YEN': 100,
   'NOOR SUHAIZLIN BINTI SAUTI': 100,
   'NURHAZURA BINTI HASSAN': 100,
-  'NORWARDATUN BINTI ABD RONI': 84,
   'DZULKIPLI BIN MARASAN': 100,
   'NUR MAISARA SYAHIRAH BINTI ZAINAL ABIDIN': 96,
-  'MOHD.RIZAL BIN ABDUL RAMAN': 96,
+  'MOHD RIZAL BIN ABDUL RAMAN': 96,
   'TERESA SUSILA ANAK JAMES': 100,
   'LIU TSE HUI': 100,
   'NOR AZREEN BINTI AYUB': 100,
@@ -2596,7 +2597,7 @@ const MARKAH_LAMA_2025 = {
   'MUHAMMAD AZRI IZANI BIN MOHAMAD HALIM': 100,
   'MOHD FATHI BIN RAMLI': 100,
   'AFHAM ZULHUSMI BIN AHMAD': 92,
-  'NURUL LIYANA BINTI MAHMOD': 96,
+  'TS. NURUL LIYANA BINTI MAHMOD': 96,
   'AZLINA BINTI MORSHIDI': 100,
   'MUHAMAD NAZRI ABU SHAH': 92,
   'CAROLINE ANN ANAK MAI': 100,
@@ -2626,6 +2627,16 @@ function getMarkahLama2025(nama) {
 let sheetsUjianData = {}; // { 'NAMA PENSYARAH': { markah: 92, statusLulus: 'Lulus', timestamp: '...' } }
 let sheetsFetchStatus = 'idle'; // idle | loading | done | error
 
+function normalizeNamaUjian(nama) {
+  return String(nama || '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
 async function fetchUjianFromSheets() {
   sheetsFetchStatus = 'loading';
   _updateFetchStatusUI();
@@ -2634,7 +2645,7 @@ async function fetchUjianFromSheets() {
     const rows = await res.json();
     sheetsUjianData = {};
     rows.forEach(row => {
-      const nama    = (row['Nama Penuh (Huruf besar contoh : ALI BIN ABU)'] || '').trim().toUpperCase();
+      const nama    = normalizeNamaUjian(row['Nama Penuh (Huruf besar contoh : ALI BIN ABU']);
       const jabatan = (row['Jabatan'] || '').trim().toUpperCase();
       const scoreRaw = row['Score'] !== undefined ? String(row['Score']).trim() : '';
       let markah = 0;
@@ -2980,7 +2991,7 @@ function saveUjianOverride() {
 
 // Dapatkan status ujian — Sheets data > override > UJIAN_DATA asal
 function getUjianStatus(r) {
-  const namaUpper = r[2].toUpperCase();
+  const namaUpper = normalizeNamaUjian(r[2]);
   if (sheetsUjianData[namaUpper]) return 'Sudah Ujian';
   if (ujianOverride.hasOwnProperty(r[1])) return ujianOverride[r[1]];
   return r[4];
@@ -2988,7 +2999,7 @@ function getUjianStatus(r) {
 
 // Dapatkan data lulus dari Sheets
 function getUjianLulus(r) {
-  const namaUpper = r[2].toUpperCase();
+  const namaUpper = normalizeNamaUjian(r[2]);
   return sheetsUjianData[namaUpper] || null;
 }
 
@@ -3266,11 +3277,12 @@ function renderUjianTable() {
   });
 
   // ── Render nama baru dari Sheets yang TIDAK dalam senarai UJIAN_DATA ──
-  const namaSenaraiSet = new Set(UJIAN_DATA.map(r => r[2].trim().toUpperCase()));
+  const namaSenaraiSet = new Set(UJIAN_DATA.map(r => normalizeNamaUjian(r[2])));
   let extraIndex = data.length;
 
   Object.entries(sheetsUjianData).forEach(([namaUpper, lulusData]) => {
-    if (namaSenaraiSet.has(namaUpper)) return; // dah ada dalam senarai — skip
+    const namaNormal = normalizeNamaUjian(namaUpper);
+    if (namaSenaraiSet.has(namaNormal) || UJIAN_EXCLUDED.has(namaNormal)) return; // sudah ada atau dikeluarkan daripada senarai
 
     const jabatan = lulusData.jabatan || '—';
 
