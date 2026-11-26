@@ -2643,7 +2643,7 @@ async function fetchUjianFromSheets() {
     const rows = await res.json();
     sheetsUjianData = {};
     rows.forEach(row => {
-      const nama    = normalizeNamaUjian(row['Nama Penuh (Huruf besar contoh : ALI BIN ABU']);
+      const nama    = normalizeNamaUjian(row['Nama Penuh (Huruf besar contoh : ALI BIN ABU)']);
       const jabatan = (row['Jabatan'] || '').trim().toUpperCase();
       const scoreRaw = row['Score'] !== undefined ? String(row['Score']).trim() : '';
       let markah = 0;
